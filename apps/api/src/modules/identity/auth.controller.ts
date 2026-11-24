@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Inject, Post, Req, Res } from '@nestjs/common';
 import { Permission } from '@franchise-crm/shared';
 import type { Request, Response } from 'express';
 import { z } from 'zod';
@@ -35,8 +35,8 @@ type IdentityRequest = Request & {
 @Controller('v1/auth')
 export class AuthController {
   constructor(
-    private readonly auth: AuthService,
-    private readonly sessions: SessionService,
+    @Inject(AuthService) private readonly auth: AuthService,
+    @Inject(SessionService) private readonly sessions: SessionService,
   ) {}
 
   @Get('csrf')

@@ -1,5 +1,5 @@
 import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import type { IdentityKind } from './models';
 import { loadConfig } from '../../config';
@@ -47,7 +47,7 @@ export class SessionService {
   private readonly secureCookies = process.env.NODE_ENV === 'production';
   private readonly secureSuffix = this.secureCookies ? '; Secure' : '';
 
-  constructor(private readonly redis: RedisStore) {}
+  constructor(@Inject(RedisStore) private readonly redis: RedisStore) {}
 
   async issueCsrf(response: Response): Promise<{ csrfToken: string }> {
     const csrfToken = randomToken();

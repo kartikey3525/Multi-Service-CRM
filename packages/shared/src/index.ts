@@ -1,3 +1,3 @@
-export * from './money';
-export * from './permissions';
-export * from './status';
+export * from './money.js';
+export * from './permissions.js';
+export * from './status.js';

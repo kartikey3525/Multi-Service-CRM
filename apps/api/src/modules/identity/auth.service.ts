@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { authenticator } from 'otplib';
 import { loadConfig } from '../../config';
@@ -24,7 +24,7 @@ const preAuthTtl = 10 * 60;
 export class AuthService {
   private dummyPasswordHash = '';
 
-  constructor(private readonly sessions: SessionService) {}
+  constructor(@Inject(SessionService) private readonly sessions: SessionService) {}
 
   async initialize(): Promise<void> {
     await provisionIdentity();

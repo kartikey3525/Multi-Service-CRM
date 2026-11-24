@@ -1,4 +1,4 @@
-import { Module, OnModuleInit } from '@nestjs/common';
+import { Inject, Module, OnModuleInit } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { AdminUsersController } from './admin-users.controller';
 import { AuditController } from './audit.controller';
@@ -22,7 +22,7 @@ import { SessionService } from './session.service';
   exports: [AuditService, SessionService],
 })
 export class IdentityModule implements OnModuleInit {
-  constructor(private readonly auth: AuthService) {}
+  constructor(@Inject(AuthService) private readonly auth: AuthService) {}
 
   async onModuleInit(): Promise<void> {
     await this.auth.initialize();

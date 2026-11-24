@@ -2,6 +2,7 @@ import {
   CanActivate,
   ExecutionContext,
   ForbiddenException,
+  Inject,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -27,8 +28,8 @@ interface PermissionMetadata {
 @Injectable()
 export class PermissionGuard implements CanActivate {
   constructor(
-    private readonly reflector: Reflector,
-    private readonly sessions: SessionService,
+    @Inject(Reflector) private readonly reflector: Reflector,
+    @Inject(SessionService) private readonly sessions: SessionService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {

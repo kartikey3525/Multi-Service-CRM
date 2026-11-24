@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  Inject,
   Param,
   Patch,
   Post,
@@ -66,7 +67,7 @@ function safeUser(user: Record<string, unknown>): Record<string, unknown> {
 
 @Controller('v1/admin')
 export class AdminUsersController {
-  constructor(private readonly audit: AuditService) {}
+  constructor(@Inject(AuditService) private readonly audit: AuditService) {}
 
   @Get('roles')
   @RequirePermission(Permission.rolesRead, 'admin')
