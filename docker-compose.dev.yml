@@ -1,0 +1,57 @@
+services:
+  proxy:
+    environment:
+      APP_DOMAIN: http://localhost
+
+  web:
+    build:
+      target: deps
+    command: ['pnpm', '--filter', '@franchise-crm/web', 'dev']
+    environment:
+      NODE_ENV: development
+    volumes:
+      - ./apps/web:/workspace/apps/web
+      - /workspace/apps/web/node_modules
+
+  api:
+    build:
+      target: deps
+    command: ['pnpm', '--filter', '@franchise-crm/api', 'start:dev']
+    environment:
+      NODE_ENV: development
+      SMTP_URL: smtp://mailpit:1025
+    volumes:
+      - ./apps/api:/workspace/apps/api
+      - ./packages/shared:/workspace/packages/shared
+      - /workspace/apps/api/node_modules
+
+  worker:
+    build:
+      target: deps
+    command: ['pnpm', '--filter', '@franchise-crm/api', 'worker:dev']
+    environment:
+      NODE_ENV: development
+      SMTP_URL: smtp://mailpit:1025
+    volumes:
+      - ./apps/api:/workspace/apps/api
+      - /workspace/apps/api/node_modules
+
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - '8025:8025'
+    expose:
+      - '1025'
+
+  mongo-express:
+    image: mongo-express:1
+    restart: unless-stopped
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://db:27017/?directConnection=true
+      ME_CONFIG_BASICAUTH: 'false'
+    ports:
+      - '8081:8081'
+    depends_on:
+      db:
+        condition: service_healthy

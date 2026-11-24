@@ -1,0 +1,30 @@
+import { Module, OnModuleInit } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+import { AdminUsersController } from './admin-users.controller';
+import { AuditController } from './audit.controller';
+import { AuditService } from './audit.service';
+import { AuthController } from './auth.controller';
+import { AuthService } from './auth.service';
+import { PermissionGuard } from './permission.guard';
+import { RedisStore } from './redis.store';
+import { SessionService } from './session.service';
+
+@Module({
+  controllers: [AuthController, AdminUsersController, AuditController],
+  providers: [
+    RedisStore,
+    SessionService,
+    AuthService,
+    AuditService,
+    PermissionGuard,
+    { provide: APP_GUARD, useClass: PermissionGuard },
+  ],
+  exports: [AuditService, SessionService],
+})
+export class IdentityModule implements OnModuleInit {
+  constructor(private readonly auth: AuthService) {}
+
+  async onModuleInit(): Promise<void> {
+    await this.auth.initialize();
+  }
+}
