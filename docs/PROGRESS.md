@@ -31,6 +31,8 @@ The dev stack was rebuilt with `make up-dev`; all nine services reached healthy 
 
 **M1 implementation acceptance:** partner 2FA controls, role-aware navigation, a database-backed scope-isolation proof, login/reset throttling, and least-privilege Mongo runtime roles are implemented and passed local checks. M1 remains open pending the staged security/deployment gate: provision separate authenticated migration/runtime Mongo identities and demonstrate that the runtime role enforces the grants, review the staging live demo, and close the M0 GST-rounding owner review. Hosted CI run `45372003559` passed on commit `15a6987`, including Compose, migrations, seed, API integration, and browser flows.
 
+**M1 gate review, 2026-11-24:** reviewed the local implementation, migration grants, hosted CI, and roadmap gate. Decision: not passed. The workspace has no staging deployment target or authenticated staging database access; local Mongo is unauthenticated, so runtime denial of audit updates/deletes has not been demonstrated. The M0 GST rounding owner review and live staging demo approval are also pending. See [M1_GATE_REVIEW.md](M1_GATE_REVIEW.md). No M2 work has started.
+
 M1-08/M1-09 browser coverage includes mocked authenticated role-aware navigation and partner 2FA enrollment UI; admin editing/audit remain API-integrated with the existing admin pages. The direct end-to-end login experience and staging checks are part of the remaining gate. M1-10's database-backed scope test proves records outside the actor's configured partner path are excluded; M2 must still provide a resolved hierarchy path before the helper can enforce a real partner tree.
 
 ## Later milestones

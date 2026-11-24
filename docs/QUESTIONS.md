@@ -6,7 +6,7 @@
 
 3. **Confirm session duration defaults.** Implemented defaults: 4 hours for administrators and 12 hours for partners. Both are environment-configurable.
 
-4. **Production MongoDB authorization.** Forward migrations define `auditAppender` and the least-privilege `crmApplication` role. The local MongoDB volume remains unauthenticated; before staging, create separate authenticated runtime and migration principals, bind the runtime principal to `crmApplication`, and verify denied writes to `audit_log`.
+4. **Production MongoDB authorization.** Forward migrations define `auditAppender` and the least-privilege `crmApplication` role. The local MongoDB volume remains unauthenticated; the M1 staging gate is recorded in `docs/M1_GATE_REVIEW.md` and remains open until separate authenticated principals are provisioned and denied writes to `audit_log` are verified there.
 
 5. **M1 security threshold review.** Login and password-reset IP/account limits now use Redis expiring counters, in addition to account lockout. Review the configurable defaults against production traffic and the trusted one-hop proxy before staging.
 
