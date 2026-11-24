@@ -80,7 +80,7 @@ blocks update and delete
 
 `password_reset_tokens` stores only a SHA-256 digest, user ID, expiry, and one-use timestamp. `email_outbox` stores recipient, template key, template variables, delivery state, attempt count, next retry time, and last error name. The worker polls MongoDB and retries with bounded backoff.
 
-The M1 migration adds JSON Schema validators and indexes to `users`, `roles`, `audit_log`, `password_reset_tokens`, and `email_outbox`. MongoDB uses a custom `auditAppender` role with only `find` and `insert` on `audit_log`; the local Compose connection remains unauthenticated, so production must assign a least-privilege authenticated application principal before the M1 gate.
+The M1 migration adds JSON Schema validators and indexes to `users`, `roles`, `audit_log`, `password_reset_tokens`, and `email_outbox`. MongoDB uses a custom `auditAppender` role with `find`, `insert`, and index discovery/creation on `audit_log`; it cannot update or delete audit records. Production must assign the API and worker an authenticated `crmApplication` principal. The separate migration URI is available only to the one-shot migrator service. The local Compose connection remains unauthenticated, so staging authorization must be verified before the M1 gate.
 Table Key columns Rules
 applications applicant_name, email, mobile,
 business_name, city, state, pin,

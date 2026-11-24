@@ -22,7 +22,7 @@ e2e:
 	pnpm e2e
 
 migrate:
-	docker compose exec -w /app/apps/api api node node_modules/migrate-mongo/bin/migrate-mongo.js up --file migrate-mongo-config.js
+	docker compose --profile migration run --rm --no-deps migrator
 
 migrate-dev:
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T api pnpm --filter @franchise-crm/api migrate

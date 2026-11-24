@@ -57,7 +57,6 @@ services:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 4000
       MONGODB_URI: ${MONGODB_URI:-mongodb://db:27017/franchise_crm?replicaSet=rs0}
-      MONGODB_MIGRATION_URI: ${MONGODB_MIGRATION_URI:-}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       SESSION_SECRET: ${SESSION_SECRET:-local-development-session-secret-change-before-deploy}
       FIELD_ENCRYPTION_KEY: ${FIELD_ENCRYPTION_KEY:-local-development-field-encryption-key-change-before-deploy}
@@ -92,6 +91,25 @@ services:
       timeout: 5s
       retries: 3
 
+  migrator:
+    profiles: ['migration']
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    working_dir: /app/apps/api
+    command:
+      [
+        'node',
+        'node_modules/migrate-mongo/bin/migrate-mongo.js',
+        'up',
+        '--file',
+        'migrate-mongo-config.js',
+      ]
+    environment:
+      NODE_ENV: production
+      MONGODB_MIGRATION_URI: ${MONGODB_MIGRATION_URI:-${MONGODB_URI:-mongodb://db:27017/franchise_crm?replicaSet=rs0}}
+      MONGODB_DATABASE: ${MONGODB_DATABASE:-franchise_crm}
+
   worker:
     build:
       context: .
@@ -101,7 +119,6 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       MONGODB_URI: ${MONGODB_URI:-mongodb://db:27017/franchise_crm?replicaSet=rs0}
-      MONGODB_MIGRATION_URI: ${MONGODB_MIGRATION_URI:-}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       SESSION_SECRET: ${SESSION_SECRET:-local-development-session-secret-change-before-deploy}
       FIELD_ENCRYPTION_KEY: ${FIELD_ENCRYPTION_KEY:-local-development-field-encryption-key-change-before-deploy}

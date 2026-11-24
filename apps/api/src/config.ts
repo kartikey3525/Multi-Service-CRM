@@ -9,7 +9,6 @@ const environmentSchema = z
       .string()
       .min(1)
       .default('mongodb://127.0.0.1:27017/franchise_crm?replicaSet=rs0'),
-    MONGODB_MIGRATION_URI: z.string().default(''),
     REDIS_URL: z.string().min(1).default('redis://127.0.0.1:6379'),
     SESSION_SECRET: z
       .string()
@@ -81,37 +80,21 @@ const environmentSchema = z
         message: 'Set a unique bootstrap password before production.',
       });
     }
-    if (!config.MONGODB_MIGRATION_URI) {
-      context.addIssue({
-        code: 'custom',
-        path: ['MONGODB_MIGRATION_URI'],
-        message: 'Production requires a separate migration database identity.',
-      });
-    } else {
-      try {
-        const runtime = new URL(config.MONGODB_URI);
-        const migration = new URL(config.MONGODB_MIGRATION_URI);
-        if (
-          !runtime.username ||
-          !runtime.password ||
-          !migration.username ||
-          !migration.password ||
-          config.MONGODB_URI === config.MONGODB_MIGRATION_URI
-        ) {
-          context.addIssue({
-            code: 'custom',
-            path: ['MONGODB_MIGRATION_URI'],
-            message:
-              'Runtime and migration database identities must be separate authenticated users.',
-          });
-        }
-      } catch {
+    try {
+      const runtime = new URL(config.MONGODB_URI);
+      if (!runtime.username || !runtime.password) {
         context.addIssue({
           code: 'custom',
-          path: ['MONGODB_MIGRATION_URI'],
-          message: 'MongoDB connection strings must be valid URLs.',
+          path: ['MONGODB_URI'],
+          message: 'Production requires an authenticated runtime MongoDB identity.',
         });
       }
+    } catch {
+      context.addIssue({
+        code: 'custom',
+        path: ['MONGODB_URI'],
+        message: 'MongoDB connection string must be a valid URL.',
+      });
     }
   });
 
