@@ -19,7 +19,7 @@ lower role gets 403, other partner's data is not visible.
 Module Endpoints
 Auth POST /auth/login , /auth/admin/login ,
 /auth/logout , /auth/2fa/setup ,
-/auth/2fa/verify , /auth/password/forgot ,
+/auth/2fa/verify , /auth/2fa/disable (partners), /auth/password/forgot ,
 /auth/password/reset , GET /auth/me
 Users (admin) GET/POST /admin/users , PATCH
 /admin/users/:id , PUT

@@ -1,6 +1,9 @@
 const config = {
   mongodb: {
-    url: process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/franchise_crm?replicaSet=rs0',
+    url:
+      process.env.MONGODB_MIGRATION_URI ||
+      process.env.MONGODB_URI ||
+      'mongodb://127.0.0.1:27017/franchise_crm?replicaSet=rs0',
     databaseName: process.env.MONGODB_DATABASE || 'franchise_crm',
     options: {},
   },

@@ -47,4 +47,17 @@ export class RedisStore implements OnModuleInit, OnModuleDestroy {
   async removeFromSet(key: string, value: string): Promise<void> {
     await this.client.srem(key, value);
   }
+
+  async incrementWindow(
+    key: string,
+    windowSeconds: number,
+  ): Promise<{ count: number; ttl: number }> {
+    const result = (await this.client.eval(
+      "local n=redis.call('INCR',KEYS[1]); if n==1 then redis.call('EXPIRE',KEYS[1],ARGV[1]); end; return {n,redis.call('TTL',KEYS[1])}",
+      1,
+      key,
+      String(windowSeconds),
+    )) as [number, number];
+    return { count: Number(result[0]), ttl: Number(result[1]) };
+  }
 }

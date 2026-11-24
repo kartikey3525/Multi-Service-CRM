@@ -7,12 +7,14 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { PermissionGuard } from './permission.guard';
 import { RedisStore } from './redis.store';
+import { RateLimitService } from './rate-limit.service';
 import { SessionService } from './session.service';
 
 @Module({
   controllers: [AuthController, AdminUsersController, AuditController],
   providers: [
     RedisStore,
+    RateLimitService,
     SessionService,
     AuthService,
     AuditService,

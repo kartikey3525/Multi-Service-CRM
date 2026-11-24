@@ -30,7 +30,13 @@
     "passwordUpdated": "Password updated. You may now sign in.",
     "changePassword": "Change password",
     "currentPassword": "Current password",
-    "passwordChangeNotice": "Changing your password signs out all active sessions. Sign in again with the new password."
+    "passwordChangeNotice": "Changing your password signs out all active sessions. Sign in again with the new password.",
+    "twoFactor": "Two-factor authentication",
+    "twoFactorEnabled": "Authenticator protection is enabled.",
+    "twoFactorDisabled": "Authenticator protection is disabled.",
+    "twoFactorSetup": "Add this secret to your authenticator app, then enter its current code.",
+    "enableTwoFactor": "Set up authenticator",
+    "disableTwoFactor": "Disable authenticator"
   },
   "admin": {
     "users": "Users",

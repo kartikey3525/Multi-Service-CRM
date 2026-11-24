@@ -20,6 +20,10 @@ const changePasswordSchema = z.object({
   currentPassword: z.string().min(1).max(128),
   newPassword: z.string().min(12).max(128),
 });
+const disableTwoFactorSchema = z.object({
+  currentPassword: z.string().min(1).max(128),
+  code: z.string().trim().min(6).max(32),
+});
 
 function parse<T>(schema: z.ZodType<T>, body: unknown): T {
   const result = schema.safeParse(body);
@@ -71,11 +75,19 @@ export class AuthController {
 
   @Post('2fa/setup')
   @AllowPreAuth()
-  @RequirePermission(Permission.identityTwoFactorManage, 'admin')
+  @RequirePermission(Permission.identityTwoFactorManage)
   async setupTotp(@Req() request: IdentityRequest) {
     if (!request.authSession)
       throw new BadRequestException('Authenticator enrollment session is missing.');
     return this.auth.setupTotp(request.authSession);
+  }
+
+  @Post('2fa/disable')
+  @RequirePermission(Permission.identityTwoFactorManage, 'partner')
+  async disableTotp(@Body() body: unknown, @Req() request: IdentityRequest) {
+    if (!request.actor) throw new BadRequestException('Actor is missing.');
+    const { currentPassword, code } = parse(disableTwoFactorSchema, body);
+    return this.auth.disablePartnerTotp(request.actor.userId, currentPassword, code);
   }
 
   @Post('2fa/verify')
@@ -118,7 +130,7 @@ export class AuthController {
   async forgotPassword(@Body() body: unknown, @Req() request: Request) {
     await this.sessions.assertCsrf(request);
     const { email } = parse(forgotSchema, body);
-    return this.auth.forgotPassword(email);
+    return this.auth.forgotPassword(email, request.ip || 'unknown');
   }
 
   @Post('password/reset')

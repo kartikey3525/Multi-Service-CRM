@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { PortalNavigation } from '../../components/portal-navigation';
 
 export default function PartnerLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
@@ -7,9 +8,7 @@ export default function PartnerLayout({ children }: Readonly<{ children: React.R
         <Link className="brand" href="/partner">
           Partner workspace
         </Link>
-        <nav className="nav">
-          <Link href="/partner">Home</Link>
-        </nav>
+        <PortalNavigation kind="partner" />
       </header>
       {children}
     </div>

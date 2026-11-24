@@ -6,8 +6,8 @@
 
 3. **Confirm session duration defaults.** Implemented defaults: 4 hours for administrators and 12 hours for partners. Both are environment-configurable.
 
-4. **Production MongoDB authorization.** The M1 migration creates an `auditAppender` role limited to find/insert on `audit_log`, and the API model rejects audit updates/deletes. The local MongoDB volume remains unauthenticated; before staging, create an application MongoDB principal with the custom least-privilege collection grants and use its authenticated URI.
+4. **Production MongoDB authorization.** Forward migrations define `auditAppender` and the least-privilege `crmApplication` role. The local MongoDB volume remains unauthenticated; before staging, create separate authenticated runtime and migration principals, bind the runtime principal to `crmApplication`, and verify denied writes to `audit_log`.
 
-5. **M1 security hardening.** Account lockout is implemented, but IP/account rate limits for login and password reset are not yet wired. These must be in place before staging; account lockout alone does not protect against distributed attempts or reset-email abuse.
+5. **M1 security threshold review.** Login and password-reset IP/account limits now use Redis expiring counters, in addition to account lockout. Review the configurable defaults against production traffic and the trusted one-hop proxy before staging.
 
 The stack is settled in `docs/DECISIONS.md`: Next.js, NestJS, MongoDB/Mongoose, Redis for sessions and queues only, and RustFS for local S3-compatible object storage. The S3 endpoint can be replaced with another provider. The roadmap's full text is preserved in `docs/SPEC.md` and `docs/ARCHITECTURE.md`; where source extracts conflict with the recorded project decision, the project decision governs implementation.

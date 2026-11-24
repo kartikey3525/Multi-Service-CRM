@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { PortalNavigation } from '../../components/portal-navigation';
 
 export default function AdminLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
@@ -7,10 +8,7 @@ export default function AdminLayout({ children }: Readonly<{ children: React.Rea
         <Link className="brand" href="/admin">
           Operations
         </Link>
-        <nav className="nav">
-          <Link href="/admin/users">Users</Link>
-          <Link href="/admin/audit">Audit</Link>
-        </nav>
+        <PortalNavigation kind="admin" />
       </header>
       {children}
     </div>

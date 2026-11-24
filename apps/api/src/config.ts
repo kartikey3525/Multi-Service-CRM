@@ -9,6 +9,7 @@ const environmentSchema = z
       .string()
       .min(1)
       .default('mongodb://127.0.0.1:27017/franchise_crm?replicaSet=rs0'),
+    MONGODB_MIGRATION_URI: z.string().default(''),
     REDIS_URL: z.string().min(1).default('redis://127.0.0.1:6379'),
     SESSION_SECRET: z
       .string()
@@ -25,6 +26,27 @@ const environmentSchema = z
     ADMIN_BOOTSTRAP_PASSWORD: z.string().min(12).default('change-me-before-use'),
     LOGIN_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(100).default(5),
     LOGIN_LOCK_MINUTES: z.coerce.number().int().min(1).max(1440).default(15),
+    LOGIN_RATE_LIMIT_WINDOW_SECONDS: z.coerce.number().int().min(30).max(86400).default(900),
+    LOGIN_RATE_LIMIT_IP_MAX_REQUESTS: z.coerce.number().int().min(1).max(10000).default(60),
+    LOGIN_RATE_LIMIT_ACCOUNT_MAX_REQUESTS: z.coerce.number().int().min(1).max(1000).default(10),
+    PASSWORD_RESET_RATE_LIMIT_WINDOW_SECONDS: z.coerce
+      .number()
+      .int()
+      .min(60)
+      .max(86400)
+      .default(900),
+    PASSWORD_RESET_RATE_LIMIT_IP_MAX_REQUESTS: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(10000)
+      .default(30),
+    PASSWORD_RESET_RATE_LIMIT_ACCOUNT_MAX_REQUESTS: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(1000)
+      .default(3),
     ADMIN_SESSION_TTL_SECONDS: z.coerce
       .number()
       .int()
@@ -58,6 +80,38 @@ const environmentSchema = z
         path: ['ADMIN_BOOTSTRAP_PASSWORD'],
         message: 'Set a unique bootstrap password before production.',
       });
+    }
+    if (!config.MONGODB_MIGRATION_URI) {
+      context.addIssue({
+        code: 'custom',
+        path: ['MONGODB_MIGRATION_URI'],
+        message: 'Production requires a separate migration database identity.',
+      });
+    } else {
+      try {
+        const runtime = new URL(config.MONGODB_URI);
+        const migration = new URL(config.MONGODB_MIGRATION_URI);
+        if (
+          !runtime.username ||
+          !runtime.password ||
+          !migration.username ||
+          !migration.password ||
+          config.MONGODB_URI === config.MONGODB_MIGRATION_URI
+        ) {
+          context.addIssue({
+            code: 'custom',
+            path: ['MONGODB_MIGRATION_URI'],
+            message:
+              'Runtime and migration database identities must be separate authenticated users.',
+          });
+        }
+      } catch {
+        context.addIssue({
+          code: 'custom',
+          path: ['MONGODB_MIGRATION_URI'],
+          message: 'MongoDB connection strings must be valid URLs.',
+        });
+      }
     }
   });
 

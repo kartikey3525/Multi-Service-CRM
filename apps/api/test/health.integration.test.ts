@@ -8,6 +8,7 @@ import { authenticator } from 'otplib';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { HttpExceptionFilter } from '../src/common/http-exception.filter';
+import { scopeToActor } from '../src/common/actor';
 import { requestIdMiddleware } from '../src/common/request-id.middleware';
 import { AuditModel, EmailOutboxModel, RoleModel, UserModel } from '../src/modules/identity/models';
 import { hashPassword } from '../src/modules/identity/security';
@@ -234,10 +235,92 @@ test(
         'partner_session',
         'csrf_token',
       ]);
-      await request(app.getHttpServer())
-        .post('/api/v1/auth/logout')
+      const factorSetup = await request(app.getHttpServer())
+        .post('/api/v1/auth/2fa/setup')
         .set('Cookie', changedPasswordCookies)
         .set('X-CSRF-Token', changedPasswordLogin.body.csrfToken as string)
+        .send({})
+        .expect(201);
+      const partnerCode = authenticator.generate(factorSetup.body.secret as string);
+      const factorEnabled = await request(app.getHttpServer())
+        .post('/api/v1/auth/2fa/verify')
+        .set('Cookie', changedPasswordCookies)
+        .set('X-CSRF-Token', changedPasswordLogin.body.csrfToken as string)
+        .send({ code: partnerCode })
+        .expect(201);
+      assert.equal((factorEnabled.body.recoveryCodes as string[]).length, 10);
+      await request(app.getHttpServer())
+        .get('/api/v1/auth/me')
+        .set('Cookie', changedPasswordCookies)
+        .expect(401);
+      const factorSessionCookies = combineCookies(factorEnabled.headers['set-cookie'], [
+        'partner_session',
+        'csrf_token',
+      ]);
+      const partnerProfile = await request(app.getHttpServer())
+        .get('/api/v1/auth/me')
+        .set('Cookie', factorSessionCookies)
+        .expect(200);
+      assert.equal(partnerProfile.body.user.totpEnabled, true);
+      assert.ok(Array.isArray(partnerProfile.body.user.permissions));
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/logout')
+        .set('Cookie', factorSessionCookies)
+        .set('X-CSRF-Token', factorEnabled.body.csrfToken as string)
+        .send({})
+        .expect(201);
+
+      const totpLoginCsrf = await request(app.getHttpServer()).get('/api/v1/auth/csrf').expect(200);
+      const totpLogin = await request(app.getHttpServer())
+        .post('/api/v1/auth/login')
+        .set('Cookie', cookiePair(totpLoginCsrf.headers['set-cookie'], 'csrf_token'))
+        .set('X-CSRF-Token', totpLoginCsrf.body.csrfToken as string)
+        .send({ email: partner.email, password: 'M1-integration-changed-password' })
+        .expect(201);
+      assert.equal(totpLogin.body.requiresTotp, true);
+      const totpPreAuthCookies = combineCookies(totpLogin.headers['set-cookie'], [
+        'partner_pre_auth',
+        'csrf_token',
+      ]);
+      const totpVerified = await request(app.getHttpServer())
+        .post('/api/v1/auth/2fa/verify')
+        .set('Cookie', totpPreAuthCookies)
+        .set('X-CSRF-Token', totpLogin.body.csrfToken as string)
+        .send({ code: authenticator.generate(factorSetup.body.secret as string) })
+        .expect(201);
+      const totpSessionCookies = combineCookies(totpVerified.headers['set-cookie'], [
+        'partner_session',
+        'csrf_token',
+      ]);
+      const recoveryCode = (factorEnabled.body.recoveryCodes as string[])[0];
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/2fa/disable')
+        .set('Cookie', totpSessionCookies)
+        .set('X-CSRF-Token', totpVerified.body.csrfToken as string)
+        .send({ currentPassword: 'M1-integration-changed-password', code: recoveryCode })
+        .expect(201, { status: 'two_factor_disabled' });
+      await request(app.getHttpServer())
+        .get('/api/v1/auth/me')
+        .set('Cookie', totpSessionCookies)
+        .expect(401);
+      const noFactorLoginCsrf = await request(app.getHttpServer())
+        .get('/api/v1/auth/csrf')
+        .expect(200);
+      const noFactorLogin = await request(app.getHttpServer())
+        .post('/api/v1/auth/login')
+        .set('Cookie', cookiePair(noFactorLoginCsrf.headers['set-cookie'], 'csrf_token'))
+        .set('X-CSRF-Token', noFactorLoginCsrf.body.csrfToken as string)
+        .send({ email: partner.email, password: 'M1-integration-changed-password' })
+        .expect(201);
+      assert.equal(noFactorLogin.body.status, 'authenticated');
+      const noFactorCookies = combineCookies(noFactorLogin.headers['set-cookie'], [
+        'partner_session',
+        'csrf_token',
+      ]);
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/logout')
+        .set('Cookie', noFactorCookies)
+        .set('X-CSRF-Token', noFactorLogin.body.csrfToken as string)
         .send({})
         .expect(201);
 
@@ -274,6 +357,91 @@ test(
         .send({ email: lockoutUser.email, password: 'M1-integration-lockout-password' })
         .expect(401);
 
+      const scopedRecords = mongoose.connection.collection('partner_scope_test_records');
+      const parentId = `parent-${randomUUID()}`;
+      const partnerId = `partner-${randomUUID()}`;
+      const downlineId = `partner-${randomUUID()}`;
+      const otherPartnerId = `partner-${randomUUID()}`;
+      await scopedRecords.insertMany([
+        { partnerId: parentId, label: 'parent' },
+        { partnerId, label: 'self' },
+        { partnerId: downlineId, label: 'downline' },
+        { partnerId: otherPartnerId, label: 'other-partner' },
+      ]);
+      const scopedActor = {
+        userId: String(partner._id),
+        kind: 'partner' as const,
+        roleKeys: ['retailer'],
+        permissions: new Set<string>(),
+        partnerPath: [parentId, partnerId, downlineId],
+      };
+      const visibleRecords = await scopedRecords
+        .find(scopeToActor(scopedActor, {}, 'partnerId'))
+        .sort({ label: 1 })
+        .toArray();
+      assert.deepEqual(
+        visibleRecords.map((record) => record.label),
+        ['downline', 'parent', 'self'],
+      );
+
+      const previousLoginLimit = process.env.LOGIN_RATE_LIMIT_ACCOUNT_MAX_REQUESTS;
+      process.env.LOGIN_RATE_LIMIT_ACCOUNT_MAX_REQUESTS = '2';
+      try {
+        const limitedEmail = `limited-${randomUUID()}@example.test`;
+        for (let attempt = 0; attempt < 2; attempt += 1) {
+          const limitedCsrf = await request(app.getHttpServer())
+            .get('/api/v1/auth/csrf')
+            .expect(200);
+          await request(app.getHttpServer())
+            .post('/api/v1/auth/login')
+            .set('Cookie', cookiePair(limitedCsrf.headers['set-cookie'], 'csrf_token'))
+            .set('X-CSRF-Token', limitedCsrf.body.csrfToken as string)
+            .send({ email: limitedEmail, password: 'invalid-password' })
+            .expect(401);
+        }
+        const blockedCsrf = await request(app.getHttpServer()).get('/api/v1/auth/csrf').expect(200);
+        await request(app.getHttpServer())
+          .post('/api/v1/auth/login')
+          .set('Cookie', cookiePair(blockedCsrf.headers['set-cookie'], 'csrf_token'))
+          .set('X-CSRF-Token', blockedCsrf.body.csrfToken as string)
+          .send({ email: limitedEmail, password: 'invalid-password' })
+          .expect(429);
+      } finally {
+        if (previousLoginLimit === undefined)
+          delete process.env.LOGIN_RATE_LIMIT_ACCOUNT_MAX_REQUESTS;
+        else process.env.LOGIN_RATE_LIMIT_ACCOUNT_MAX_REQUESTS = previousLoginLimit;
+      }
+
+      const previousResetLimit = process.env.PASSWORD_RESET_RATE_LIMIT_ACCOUNT_MAX_REQUESTS;
+      process.env.PASSWORD_RESET_RATE_LIMIT_ACCOUNT_MAX_REQUESTS = '2';
+      try {
+        const resetThrottleEmail = `reset-limit-${randomUUID()}@example.test`;
+        for (let attempt = 0; attempt < 2; attempt += 1) {
+          const limitedResetCsrf = await request(app.getHttpServer())
+            .get('/api/v1/auth/csrf')
+            .expect(200);
+          await request(app.getHttpServer())
+            .post('/api/v1/auth/password/forgot')
+            .set('Cookie', cookiePair(limitedResetCsrf.headers['set-cookie'], 'csrf_token'))
+            .set('X-CSRF-Token', limitedResetCsrf.body.csrfToken as string)
+            .send({ email: resetThrottleEmail })
+            .expect(201, { accepted: true });
+        }
+        const blockedResetCsrf = await request(app.getHttpServer())
+          .get('/api/v1/auth/csrf')
+          .expect(200);
+        await request(app.getHttpServer())
+          .post('/api/v1/auth/password/forgot')
+          .set('Cookie', cookiePair(blockedResetCsrf.headers['set-cookie'], 'csrf_token'))
+          .set('X-CSRF-Token', blockedResetCsrf.body.csrfToken as string)
+          .send({ email: resetThrottleEmail })
+          .expect(429);
+      } finally {
+        if (previousResetLimit === undefined)
+          delete process.env.PASSWORD_RESET_RATE_LIMIT_ACCOUNT_MAX_REQUESTS;
+        else process.env.PASSWORD_RESET_RATE_LIMIT_ACCOUNT_MAX_REQUESTS = previousResetLimit;
+      }
+
       await assert.rejects(() => AuditModel.updateOne({}, { $set: { action: 'changed' } }));
       await assert.rejects(() => AuditModel.deleteOne({}));
 
@@ -293,7 +461,10 @@ test(
 
 function cookiePair(cookies: string[] | string | undefined, name: string): string {
   const header = Array.isArray(cookies) ? cookies : cookies ? [cookies] : [];
-  const cookie = header.find((entry) => entry.startsWith(`${name}=`))?.split(';', 1)[0];
+  const cookie = [...header]
+    .reverse()
+    .find((entry) => entry.startsWith(`${name}=`))
+    ?.split(';', 1)[0];
   assert.ok(cookie, `expected ${name} cookie`);
   return cookie;
 }

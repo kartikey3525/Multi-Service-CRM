@@ -15,6 +15,7 @@ import {
   verifyPassword,
 } from './security';
 import { provisionIdentity } from './provisioning';
+import { RateLimitService } from './rate-limit.service';
 
 const config = loadConfig();
 const invalidCredentials = 'Invalid email or password.';
@@ -24,7 +25,10 @@ const preAuthTtl = 10 * 60;
 export class AuthService {
   private dummyPasswordHash = '';
 
-  constructor(@Inject(SessionService) private readonly sessions: SessionService) {}
+  constructor(
+    @Inject(SessionService) private readonly sessions: SessionService,
+    @Inject(RateLimitService) private readonly rateLimits: RateLimitService,
+  ) {}
 
   async initialize(): Promise<void> {
     await provisionIdentity();
@@ -38,6 +42,9 @@ export class AuthService {
     request: Request,
     response: Response,
   ) {
+    await this.rateLimits.enforce(
+      this.rateLimits.loginLimits(kind, email, request.ip || 'unknown'),
+    );
     const user = await UserModel.findOne({ email: email.toLowerCase(), kind }).select(
       '+passwordHash',
     );
@@ -96,11 +103,15 @@ export class AuthService {
   }
 
   async setupTotp(session: SessionContext) {
-    if (session.value.kind !== 'admin' || session.value.stage !== 'enrollment_pending') {
+    const partnerEnrollment =
+      session.value.kind === 'partner' && session.value.stage === 'authenticated';
+    const adminEnrollment =
+      session.value.kind === 'admin' && session.value.stage === 'enrollment_pending';
+    if (!partnerEnrollment && !adminEnrollment) {
       throw new UnauthorizedException('Authenticator enrollment is not pending.');
     }
     const user = await UserModel.findById(session.value.userId).select('+totpSecretEnc');
-    if (!user || user.totpEnabled)
+    if (!user || (adminEnrollment && user.totpEnabled) || (partnerEnrollment && user.totpEnabled))
       throw new UnauthorizedException('Authenticator enrollment is not pending.');
     const secret = user.totpSecretEnc
       ? decryptField(user.totpSecretEnc, config.FIELD_ENCRYPTION_KEY)
@@ -113,7 +124,9 @@ export class AuthService {
   }
 
   async verifyTotp(code: string, session: SessionContext, request: Request, response: Response) {
-    if (session.value.stage === 'authenticated')
+    const partnerEnrollment =
+      session.value.kind === 'partner' && session.value.stage === 'authenticated';
+    if (session.value.stage === 'authenticated' && !partnerEnrollment)
       throw new UnauthorizedException('Two-factor verification is not pending.');
     const user = await UserModel.findById(session.value.userId).select(
       '+totpSecretEnc +recoveryCodeHashes',
@@ -139,7 +152,7 @@ export class AuthService {
     if (!valid) throw new UnauthorizedException('Invalid authenticator code.');
 
     let recoveryCodes: string[] | undefined;
-    if (session.value.stage === 'enrollment_pending') {
+    if (session.value.stage === 'enrollment_pending' || partnerEnrollment) {
       recoveryCodes = Array.from({ length: 10 }, () => randomBytes(8).toString('hex'));
       user.recoveryCodeHashes = await Promise.all(
         recoveryCodes.map((recoveryCode) => hashPassword(recoveryCode)),
@@ -184,13 +197,14 @@ export class AuthService {
       .lean();
     if (!user) throw new UnauthorizedException('Session is no longer valid.');
     const roles = await RoleModel.find({ _id: { $in: user.roleIds } })
-      .select('key name')
+      .select('key name permissions')
       .lean();
     return {
       user: {
         ...user,
         roleKeys: roles.map((role) => role.key),
         roleNames: roles.map((role) => role.name),
+        permissions: [...new Set(roles.flatMap((role) => role.permissions))],
       },
     };
   }
@@ -222,7 +236,8 @@ export class AuthService {
     return { status: 'password_updated' };
   }
 
-  async forgotPassword(email: string): Promise<{ accepted: true }> {
+  async forgotPassword(email: string, ip: string): Promise<{ accepted: true }> {
+    await this.rateLimits.enforce(this.rateLimits.passwordResetLimits(email, ip));
     const user = await UserModel.findOne({ email: email.toLowerCase(), status: 'active' }).select(
       '_id email',
     );
@@ -246,6 +261,47 @@ export class AuthService {
       });
     }
     return { accepted: true };
+  }
+
+  async disablePartnerTotp(userId: string, currentPassword: string, code: string) {
+    const user = await UserModel.findById(userId).select(
+      '+passwordHash +totpSecretEnc +recoveryCodeHashes',
+    );
+    if (
+      !user ||
+      user.kind !== 'partner' ||
+      !user.totpEnabled ||
+      !(await verifyPassword(user.passwordHash, currentPassword))
+    ) {
+      throw new UnauthorizedException('Two-factor settings could not be verified.');
+    }
+    let valid = false;
+    if (user.totpSecretEnc)
+      valid = authenticator.check(
+        code,
+        decryptField(user.totpSecretEnc, config.FIELD_ENCRYPTION_KEY),
+      );
+    if (!valid) {
+      for (const hash of user.recoveryCodeHashes) {
+        if (await verifyPassword(hash, code.trim().toLowerCase())) {
+          valid = true;
+          break;
+        }
+      }
+    }
+    if (!valid) throw new UnauthorizedException('Two-factor settings could not be verified.');
+    user.totpEnabled = false;
+    user.set('totpSecretEnc', undefined);
+    user.recoveryCodeHashes = [];
+    await user.save();
+    await this.sessions.revokeUserSessions(userId);
+    await AuditModel.create({
+      actorUserId: user._id,
+      action: 'two_factor_disabled',
+      entity: 'users',
+      entityId: userId,
+    });
+    return { status: 'two_factor_disabled' as const };
   }
 
   async resetPassword(token: string, password: string): Promise<{ status: 'password_updated' }> {

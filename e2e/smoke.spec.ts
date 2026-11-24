@@ -18,3 +18,71 @@ test('partner and admin routes redirect to login placeholders', async ({ page })
   await page.goto('/admin');
   await expect(page).toHaveURL(/\/admin\/login$/);
 });
+
+test('admin navigation only shows links allowed by the signed-in role', async ({ page }) => {
+  await page.route('**/api/v1/auth/me', async (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        user: {
+          email: 'finance@example.test',
+          name: 'Finance user',
+          kind: 'admin',
+          roleNames: ['Finance'],
+          roleKeys: ['finance'],
+          permissions: ['identity.me', 'wallet.read', 'plans.read'],
+          totpEnabled: true,
+        },
+      }),
+    }),
+  );
+
+  await page.goto('/admin');
+  await expect(page.getByRole('link', { name: 'Home' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Users' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Audit log' })).toHaveCount(0);
+});
+
+test('partner profile exposes authenticator enrollment and recovery codes', async ({ page }) => {
+  await page.route('**/api/v1/auth/me', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        user: {
+          email: 'partner@example.test',
+          name: 'Partner',
+          kind: 'partner',
+          roleNames: ['Retailer'],
+          permissions: ['identity.me'],
+          totpEnabled: false,
+        },
+      }),
+    }),
+  );
+  await page.route('**/api/v1/auth/2fa/setup', (route) =>
+    route.fulfill({
+      status: 201,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        secret: 'JBSWY3DPEHPK3PXP',
+        otpauthUrl: 'otpauth://totp/CRM:partner?secret=JBSWY3DPEHPK3PXP',
+      }),
+    }),
+  );
+  await page.route('**/api/v1/auth/2fa/verify', (route) =>
+    route.fulfill({
+      status: 201,
+      contentType: 'application/json',
+      body: JSON.stringify({ recoveryCodes: ['recovery-one', 'recovery-two'] }),
+    }),
+  );
+
+  await page.goto('/partner');
+  await page.getByRole('button', { name: 'Set up authenticator' }).click();
+  await expect(page.getByText(/otpauth:\/\/totp/)).toBeVisible();
+  await page.getByLabel('Authenticator code').fill('123456');
+  await page.getByRole('button', { name: 'Verify code' }).click();
+  await expect(page.getByText('recovery-one')).toBeVisible();
+});

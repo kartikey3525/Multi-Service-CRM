@@ -10,6 +10,7 @@ async function bootstrap(): Promise<void> {
   const config = loadConfig();
   await mongoose.connect(config.MONGODB_URI);
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
   app.use(requestIdMiddleware);
   app.setGlobalPrefix('api');
   app.useGlobalFilters(new HttpExceptionFilter());
