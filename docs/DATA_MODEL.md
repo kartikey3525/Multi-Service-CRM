@@ -80,7 +80,7 @@ blocks update and delete
 
 `password_reset_tokens` stores only a SHA-256 digest, user ID, expiry, and one-use timestamp. `email_outbox` stores recipient, template key, template variables, delivery state, attempt count, next retry time, and last error name. The worker polls MongoDB and retries with bounded backoff.
 
-The M1 migration adds JSON Schema validators and indexes to `users`, `roles`, `audit_log`, `password_reset_tokens`, and `email_outbox`. MongoDB uses a custom `auditAppender` role with `find`, `insert`, and index discovery/creation on `audit_log`; it cannot update or delete audit records. Production must assign the API and worker an authenticated `crmApplication` principal. The separate migration URI is available only to the one-shot migrator service. The local Compose connection remains unauthenticated, so staging authorization must be verified before the M1 gate.
+The M1 migration adds JSON Schema validators and indexes to identity collections in `crm` and `audit_log` in `crm_immutable`. MongoDB Atlas roles are provisioned out of band. `crmApplication` has read/write on `crm` and only find/insert on `crm_immutable`; `crmMigrator` is a separate principal. API/worker receive `MONGODB_URI`; only the one-shot migrator receives `MONGODB_MIGRATE_URI`. Migrations verify roles and prepare schema/indexes without changing role definitions. Local Compose reproduces the authenticated roles and database split; the live Atlas probes and identity demo are deferred by owner until release preparation.
 Table Key columns Rules
 applications applicant_name, email, mobile,
 business_name, city, state, pin,

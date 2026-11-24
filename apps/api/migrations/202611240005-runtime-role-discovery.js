@@ -1,29 +1,11 @@
+// Migrations must authenticate with a separate identity carrying crmMigrator.
 module.exports = {
   async up(db) {
-    const database = db.databaseName;
-    await db.command({
-      updateRole: 'crmApplication',
-      privileges: [
-        { resource: { db: database, collection: '' }, actions: ['listCollections'] },
-        ...['users', 'roles', 'password_reset_tokens', 'email_outbox'].map((collection) => ({
-          resource: { db: database, collection },
-          actions: ['find', 'insert', 'update', 'remove', 'createIndex', 'listIndexes'],
-        })),
-      ],
-      roles: [{ role: 'auditAppender', db: database }],
-    });
+    const result = await db.client
+      .db('admin')
+      .command({ rolesInfo: { role: 'crmMigrator', db: 'admin' } });
+    if (!result.roles?.length)
+      throw new Error('Required MongoDB role crmMigrator@admin is missing.');
   },
-  async down(db) {
-    const database = db.databaseName;
-    await db.command({
-      updateRole: 'crmApplication',
-      privileges: [
-        ...['users', 'roles', 'password_reset_tokens', 'email_outbox'].map((collection) => ({
-          resource: { db: database, collection },
-          actions: ['find', 'insert', 'update', 'remove', 'createIndex'],
-        })),
-      ],
-      roles: [{ role: 'auditAppender', db: database }],
-    });
-  },
+  async down() {},
 };

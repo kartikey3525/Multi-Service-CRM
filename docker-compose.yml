@@ -56,7 +56,7 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 4000
-      MONGODB_URI: ${MONGODB_URI:-mongodb://db:27017/franchise_crm?replicaSet=rs0}
+      MONGODB_URI: ${MONGODB_URI:?Set MONGODB_URI}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       SESSION_SECRET: ${SESSION_SECRET:-local-development-session-secret-change-before-deploy}
       FIELD_ENCRYPTION_KEY: ${FIELD_ENCRYPTION_KEY:-local-development-field-encryption-key-change-before-deploy}
@@ -73,8 +73,6 @@ services:
       S3_ACCESS_KEY: ${S3_ACCESS_KEY:-minio-local}
       S3_SECRET_KEY: ${S3_SECRET_KEY:-minio-local-secret}
     depends_on:
-      db:
-        condition: service_healthy
       redis:
         condition: service_healthy
       storage:
@@ -107,8 +105,9 @@ services:
       ]
     environment:
       NODE_ENV: production
-      MONGODB_MIGRATION_URI: ${MONGODB_MIGRATION_URI:-${MONGODB_URI:-mongodb://db:27017/franchise_crm?replicaSet=rs0}}
-      MONGODB_DATABASE: ${MONGODB_DATABASE:-franchise_crm}
+      MONGODB_MIGRATE_URI: ${MONGODB_MIGRATE_URI:?Set MONGODB_MIGRATE_URI}
+      MONGODB_DATABASE: ${MONGODB_DATABASE:-crm}
+      MONGODB_LEGACY_DATABASE: ${MONGODB_LEGACY_DATABASE:-}
 
   worker:
     build:
@@ -118,7 +117,7 @@ services:
     command: ['node', 'apps/api/dist/worker.js']
     environment:
       NODE_ENV: ${NODE_ENV:-production}
-      MONGODB_URI: ${MONGODB_URI:-mongodb://db:27017/franchise_crm?replicaSet=rs0}
+      MONGODB_URI: ${MONGODB_URI:?Set MONGODB_URI}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       SESSION_SECRET: ${SESSION_SECRET:-local-development-session-secret-change-before-deploy}
       FIELD_ENCRYPTION_KEY: ${FIELD_ENCRYPTION_KEY:-local-development-field-encryption-key-change-before-deploy}
@@ -133,8 +132,6 @@ services:
       S3_ACCESS_KEY: ${S3_ACCESS_KEY:-minio-local}
       S3_SECRET_KEY: ${S3_SECRET_KEY:-minio-local-secret}
     depends_on:
-      db:
-        condition: service_healthy
       redis:
         condition: service_healthy
       api:
@@ -144,23 +141,6 @@ services:
       interval: 15s
       timeout: 5s
       retries: 3
-      start_period: 10s
-
-  db:
-    image: mongo:8
-    restart: unless-stopped
-    command: ['mongod', '--replSet', 'rs0', '--bind_ip_all']
-    volumes:
-      - mongodata:/data/db
-    healthcheck:
-      test:
-        [
-          'CMD-SHELL',
-          'mongosh --quiet --eval ''try { rs.status().ok } catch (e) { rs.initiate({_id:"rs0",members:[{_id:0,host:"db:27017"}]}).ok }'' | grep -q 1',
-        ]
-      interval: 5s
-      timeout: 10s
-      retries: 20
       start_period: 10s
 
   redis:
@@ -204,3 +184,4 @@ volumes:
   mongodata:
   redisdata:
   miniodata:
+  mongoconfig:

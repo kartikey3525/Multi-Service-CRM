@@ -5,10 +5,7 @@ const environmentSchema = z
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     PORT: z.coerce.number().int().min(1).max(65535).default(4000),
     LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
-    MONGODB_URI: z
-      .string()
-      .min(1)
-      .default('mongodb://127.0.0.1:27017/franchise_crm?replicaSet=rs0'),
+    MONGODB_URI: z.string().min(1).default('mongodb://127.0.0.1:27017/crm?replicaSet=rs0'),
     REDIS_URL: z.string().min(1).default('redis://127.0.0.1:6379'),
     SESSION_SECRET: z
       .string()

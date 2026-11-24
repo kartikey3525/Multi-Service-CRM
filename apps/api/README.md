@@ -17,5 +17,5 @@ NestJS modular monolith API. MongoDB is the primary database, accessed through M
 
 ## Checks that protect the application
 
-- `pnpm --filter @franchise-crm/api test:integration` runs the Supertest readiness/error-shape harness against a unique `franchise_crm_test_*` database selected by `MONGODB_TEST_URI`, then drops that database. Never point this variable at a production database.
+- `pnpm --filter @franchise-crm/api test:integration` runs the Supertest readiness/error-shape harness against a unique `crm_test_*` database selected by `MONGODB_TEST_URI` and a matching disposable immutable database, then drops both. Never point this variable at a production database.
 - Partner test fixtures live in `test/factories`; add model-specific factories with their owning milestone.

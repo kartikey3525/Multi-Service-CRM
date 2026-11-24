@@ -1,4 +1,36 @@
 services:
+  db:
+    image: mongo:8
+    restart: unless-stopped
+    command:
+      [
+        'bash',
+        '-ec',
+        'umask 077; printf "%s" "$MONGODB_LOCAL_REPLICA_KEY" > /data/configdb/keyfile; exec mongod --auth --keyFile /data/configdb/keyfile --replSet rs0 --bind_ip_all',
+      ]
+    environment:
+      MONGODB_LOCAL_REPLICA_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      MONGODB_LOCAL_ROOT_USERNAME: ${MONGODB_LOCAL_ROOT_USERNAME}
+      MONGODB_LOCAL_ROOT_PASSWORD: ${MONGODB_LOCAL_ROOT_PASSWORD}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_LOCAL_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_LOCAL_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: admin
+      MONGODB_LOCAL_APP_PASSWORD: ${MONGODB_LOCAL_APP_PASSWORD}
+      MONGODB_LOCAL_MIGRATOR_PASSWORD: ${MONGODB_LOCAL_MIGRATOR_PASSWORD}
+      MONGODB_LOCAL_VIEWER_PASSWORD: ${MONGODB_LOCAL_VIEWER_PASSWORD}
+    volumes:
+      - mongodata:/data/db
+      - mongoconfig:/data/configdb
+      - ./scripts/bootstrap-local-mongo.js:/bootstrap-local-mongo.js:ro
+      - ./scripts/probe-mongo-authorization.js:/probe-mongo-authorization.js:ro
+      - ./scripts/bootstrap-local-mongo-existing.js:/bootstrap-local-mongo-existing.js:ro
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', 'db.adminCommand("ping").ok']
+      interval: 5s
+      timeout: 10s
+      retries: 30
+      start_period: 10s
+
   proxy:
     environment:
       APP_DOMAIN: http://localhost
@@ -20,6 +52,13 @@ services:
     environment:
       NODE_ENV: development
       SMTP_URL: smtp://mailpit:1025
+      MONGODB_URI: ${MONGODB_URI}
+      MONGODB_IMMUTABLE_DATABASE: ${MONGODB_IMMUTABLE_DATABASE}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - ./apps/api:/workspace/apps/api
       - ./packages/shared:/workspace/packages/shared
@@ -32,6 +71,12 @@ services:
     environment:
       NODE_ENV: development
       SMTP_URL: smtp://mailpit:1025
+      MONGODB_URI: ${MONGODB_URI}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - ./apps/api:/workspace/apps/api
       - /workspace/apps/api/node_modules
@@ -48,7 +93,8 @@ services:
     image: mongo-express:1
     restart: unless-stopped
     environment:
-      ME_CONFIG_MONGODB_URL: mongodb://db:27017/?directConnection=true
+      ME_CONFIG_MONGODB_URL: ${MONGODB_LOCAL_VIEWER_URI}
+      ME_CONFIG_MONGODB_ENABLE_ADMIN: 'false'
       ME_CONFIG_BASICAUTH: 'false'
     ports:
       - '8081:8081'

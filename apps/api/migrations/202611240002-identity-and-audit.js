@@ -1,4 +1,5 @@
-const collections = ['users', 'roles', 'audit_log', 'password_reset_tokens', 'email_outbox'];
+const collections = ['users', 'roles', 'password_reset_tokens', 'email_outbox'];
+const immutableCollections = ['audit_log', 'ledger_entries', 'order_events'];
 
 const validators = {
   users: {
@@ -103,11 +104,17 @@ module.exports = {
     await db
       .collection('roles')
       .createIndex({ key: 1 }, { unique: true, name: 'roles_key_unique' });
-    await db.collection('audit_log').createIndex({ createdAt: -1 }, { name: 'audit_created_desc' });
-    await db
+    const immutableDb = db.client.db('crm_immutable');
+    for (const name of immutableCollections) {
+      if (!(await collectionExists(immutableDb, name))) await immutableDb.createCollection(name);
+    }
+    await immutableDb
+      .collection('audit_log')
+      .createIndex({ createdAt: -1 }, { name: 'audit_created_desc' });
+    await immutableDb
       .collection('audit_log')
       .createIndex({ actorUserId: 1, createdAt: -1 }, { name: 'audit_actor_created_desc' });
-    await db
+    await immutableDb
       .collection('audit_log')
       .createIndex(
         { entity: 1, entityId: 1, createdAt: -1 },
@@ -123,30 +130,15 @@ module.exports = {
       .collection('email_outbox')
       .createIndex({ status: 1, nextAttemptAt: 1, createdAt: 1 }, { name: 'outbox_pending' });
 
-    try {
-      await db.command({
-        createRole: 'auditAppender',
-        privileges: [
-          {
-            resource: { db: db.databaseName, collection: 'audit_log' },
-            actions: ['find', 'insert'],
-          },
-        ],
-        roles: [],
-      });
-    } catch (error) {
-      if (error.code !== 51002) throw error;
-    }
+    await immutableDb.command({
+      collMod: 'audit_log',
+      validator: { $jsonSchema: validators.audit_log },
+      validationLevel: 'strict',
+      validationAction: 'error',
+    });
   },
 
-  async down(db) {
-    for (const name of [...collections].reverse()) {
-      if (await collectionExists(db, name)) await db.collection(name).drop();
-    }
-    try {
-      await db.command({ dropRole: 'auditAppender' });
-    } catch (error) {
-      if (error.code !== 11 && error.codeName !== 'RoleNotFound') throw error;
-    }
+  async down() {
+    // Forward-only schema: immutable business/audit collections are never dropped.
   },
 };

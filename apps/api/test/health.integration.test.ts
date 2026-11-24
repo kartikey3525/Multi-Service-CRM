@@ -6,11 +6,9 @@ import mongoose from 'mongoose';
 import { NestFactory } from '@nestjs/core';
 import { authenticator } from 'otplib';
 import request from 'supertest';
-import { AppModule } from '../src/app.module';
 import { HttpExceptionFilter } from '../src/common/http-exception.filter';
 import { scopeToActor } from '../src/common/actor';
 import { requestIdMiddleware } from '../src/common/request-id.middleware';
-import { AuditModel, EmailOutboxModel, RoleModel, UserModel } from '../src/modules/identity/models';
 import { hashPassword } from '../src/modules/identity/security';
 import { makePartnerFixture } from './factories/partner.factory';
 
@@ -29,10 +27,14 @@ test(
       /(?:^|_)test(?:_|$)/i,
       'MONGODB_TEST_URI must select a test-only database',
     );
-    const databaseName = `franchise_crm_test_${randomUUID().replaceAll('-', '')}`;
+    const databaseName = `crm_test_${randomUUID().replaceAll('-', '')}`;
+    const immutableDatabaseName = `${databaseName}_immutable`;
+    process.env.MONGODB_IMMUTABLE_DATABASE = immutableDatabaseName;
+    const [{ AppModule }, { AuditModel, EmailOutboxModel, RoleModel, UserModel }] =
+      await Promise.all([import('../src/app.module'), import('../src/modules/identity/models')]);
     parsedUri.pathname = `/${databaseName}`;
 
-    assert.match(databaseName, /^franchise_crm_test_/);
+    assert.match(databaseName, /^crm_test_/);
     const fixture = makePartnerFixture();
     assert.equal(fixture.path[0], fixture._id);
     assert.match(fixture.email, /@example\.test$/);
@@ -454,6 +456,11 @@ test(
       await app?.close();
       if (mongoose.connection.readyState === 0) await mongoose.connect(parsedUri.toString());
       await mongoose.connection.dropDatabase().catch(() => undefined);
+      await mongoose.connection
+        .useDb(immutableDatabaseName)
+        .dropDatabase()
+        .catch(() => undefined);
+      delete process.env.MONGODB_IMMUTABLE_DATABASE;
       await mongoose.disconnect();
     }
   },

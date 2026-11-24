@@ -10,3 +10,5 @@ playwright-report/
 .env.*.local
 !.env.example
 .DS_Store
+.env.staging
+atlas-credentials.env

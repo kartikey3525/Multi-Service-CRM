@@ -172,9 +172,20 @@ function getModel<T>(name: string, schema: Schema<T>, collection: string) {
   );
 }
 
+function getImmutableModel<T>(name: string, schema: Schema<T>, collection: string) {
+  const connection = mongoose.connection.useDb(
+    process.env.MONGODB_IMMUTABLE_DATABASE ?? 'crm_immutable',
+    { useCache: true },
+  );
+  return (
+    (connection.models[name] as mongoose.Model<T> | undefined) ??
+    connection.model<T>(name, schema, collection)
+  );
+}
+
 export const UserModel = getModel<UserRecord>('IdentityUser', userSchema, 'users');
 export const RoleModel = getModel<RoleRecord>('IdentityRole', roleSchema, 'roles');
-export const AuditModel = getModel<AuditRecord>('AuditRecord', auditSchema, 'audit_log');
+export const AuditModel = getImmutableModel<AuditRecord>('AuditRecord', auditSchema, 'audit_log');
 export const PasswordResetModel = getModel<PasswordResetRecord>(
   'PasswordReset',
   resetSchema,

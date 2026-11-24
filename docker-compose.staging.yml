@@ -1,0 +1,24 @@
+# Staging deployment uses Atlas; this overlay intentionally defines no db service.
+# Inject MONGODB_URI for api/worker and MONGODB_MIGRATE_URI for the migration job
+# through the deployment secret manager or an explicitly supplied secret env file.
+services:
+  api:
+    environment:
+      NODE_ENV: production
+      MONGODB_URI: ${MONGODB_URI:?Inject Atlas runtime URI from the secret manager}
+    depends_on:
+      redis:
+        condition: service_healthy
+      storage:
+        condition: service_healthy
+
+  worker:
+    environment:
+      NODE_ENV: production
+      MONGODB_URI: ${MONGODB_URI:?Inject Atlas runtime URI from the secret manager}
+
+  migrator:
+    environment:
+      NODE_ENV: production
+      MONGODB_MIGRATE_URI: ${MONGODB_MIGRATE_URI:?Inject Atlas migrator URI only for this job}
+      MONGODB_LEGACY_DATABASE: ''

@@ -8,6 +8,8 @@ import mongoose from 'mongoose';
 
 async function bootstrap(): Promise<void> {
   const config = loadConfig();
+  mongoose.set('autoIndex', false);
+  mongoose.set('autoCreate', false);
   await mongoose.connect(config.MONGODB_URI);
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   app.getHttpAdapter().getInstance().set('trust proxy', 1);

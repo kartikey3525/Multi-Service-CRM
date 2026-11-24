@@ -28,6 +28,8 @@ function wait(ms: number): Promise<void> {
 
 async function runWorker(): Promise<void> {
   const config = loadConfig();
+  mongoose.set('autoIndex', false);
+  mongoose.set('autoCreate', false);
   await mongoose.connect(config.MONGODB_URI);
   const transport = config.SMTP_URL ? nodemailer.createTransport(config.SMTP_URL) : undefined;
   process.on('SIGTERM', () => {

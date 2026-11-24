@@ -20,7 +20,7 @@ test('production requires an authenticated MongoDB runtime URI only', () => {
     config.MONGODB_URI,
     'mongodb://runtime-user:runtime-password@mongo.example/franchise_crm',
   );
-  assert.equal('MONGODB_MIGRATION_URI' in config, false);
+  assert.equal('MONGODB_MIGRATE_URI' in config, false);
 });
 
 test('production rejects an unauthenticated MongoDB runtime URI', () => {

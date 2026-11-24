@@ -4,6 +4,8 @@ import { provisionIdentity } from './modules/identity/provisioning';
 
 async function seed(): Promise<void> {
   const config = loadConfig();
+  mongoose.set('autoIndex', false);
+  mongoose.set('autoCreate', false);
   await mongoose.connect(config.MONGODB_URI);
   try {
     await provisionIdentity();

@@ -1,5 +1,13 @@
 # AGENTS.md
 
+## Deferred before release
+
+- [ ] Provision and verify the `crm_app` and `crm_migrator` identities on MongoDB Atlas.
+- [ ] Run the MongoDB authorization probes against staging.
+- [ ] Run the staging identity demo.
+- [ ] Confirm the Atlas IP access list is restricted to approved deployment sources.
+- [ ] Complete these checks before M10 release; local development and M2+ do not wait on staging.
+
 ## Project
 
 Multi-service franchise portal: public site, partner portal, admin portal, one API.
