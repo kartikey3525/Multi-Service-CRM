@@ -313,6 +313,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@franchise-crm/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       next:
         specifier: ^16.0.0
         version: 16.4.6(@playwright/test@1.65.1)(@types/node@22.20.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -335,10 +338,17 @@ importers:
       typescript:
         specifier: ^5.0.0
         version: 5.9.3
+      tsx:
+        specifier: ^4.20.0
+        version: 4.23.15
 
   packages/config: {}
 
   packages/shared:
+    dependencies:
+      zod:
+        specifier: ^4.0.0
+        version: 4.6.7
     devDependencies:
       '@types/node':
         specifier: ^22.0.0

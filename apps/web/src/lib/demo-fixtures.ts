@@ -6,7 +6,7 @@ export const demoUsers: Record<'admin' | 'partner', DemoUser> = {
     email: 'admin@servicenetwork.demo',
     name: 'Avery Mehta',
     kind: 'admin',
-    roleNames: ['Operations administrator'],
+    roleNames: ['Super administrator'],
     permissions: [
       'identity.me',
       'applications.read',
@@ -16,6 +16,27 @@ export const demoUsers: Record<'admin' | 'partner', DemoUser> = {
       'admin_users.read',
       'admin_users.write',
       'audit.read',
+      'orders.read',
+      'orders.process',
+      'wallet.read',
+      'wallet.topup_approve',
+      'wallet.adjust',
+      'services.read',
+      'services.manage',
+      'commissions.read',
+      'commissions.manage',
+      'payouts.read',
+      'payouts.manage',
+      'tickets.read',
+      'tickets.manage',
+      'reports.read',
+      'content.read',
+      'content.manage',
+      'roles.read',
+      'roles.manage',
+      'settings.read',
+      'settings.manage',
+      'files.download',
     ],
     totpEnabled: true,
   },
@@ -25,7 +46,24 @@ export const demoUsers: Record<'admin' | 'partner', DemoUser> = {
     name: 'Riya Kapoor',
     kind: 'partner',
     roleNames: ['Master distributor'],
-    permissions: ['identity.me', 'files.upload', 'files.download', 'team.read'],
+    permissions: [
+      'identity.me',
+      'files.upload',
+      'files.download',
+      'team.read',
+      'orders.read',
+      'orders.create',
+      'wallet.read',
+      'wallet.topup_request',
+      'commissions.read',
+      'payouts.read',
+      'tickets.read',
+      'tickets.manage',
+      'customers.read',
+      'customers.manage',
+      'services.read',
+      'content.read',
+    ],
     totpEnabled: false,
     partner: {
       id: '64a100000000000000000003',
@@ -36,7 +74,7 @@ export const demoUsers: Record<'admin' | 'partner', DemoUser> = {
   },
 };
 
-export const demoPartners: PartnerSummary[] = [
+const initialPartners: PartnerSummary[] = [
   {
     id: '64a100000000000000000003',
     code: 'SN-MH-2048',
@@ -82,6 +120,42 @@ export const demoPartners: PartnerSummary[] = [
     state: 'Maharashtra',
   },
 ];
+
+const generatedPartners: PartnerSummary[] = Array.from({ length: 29 }, (_, index) => {
+  const tier = index === 0 ? 'master_distributor' : index < 5 ? 'distributor' : 'retailer';
+  const id = (BigInt('0x64a100000000000000000100') + BigInt(index)).toString(16).padStart(24, '0');
+  const generatedDistributor = (
+    BigInt('0x64a100000000000000000100') + BigInt(1 + ((index - 5) % 4))
+  )
+    .toString(16)
+    .padStart(24, '0');
+  const parentId =
+    tier === 'master_distributor'
+      ? null
+      : tier === 'distributor'
+        ? initialPartners[0]!.id
+        : generatedDistributor;
+  const names = [
+    'Sharma Digital Seva',
+    'Maharashtra Citizen Hub',
+    'Narmada Online Point',
+    'Sahyadri Business Desk',
+    'Deccan Service Centre',
+  ];
+  return {
+    id,
+    code: `SN-MH-${String(4000 + index * 17)}`,
+    parentId,
+    depth: tier === 'master_distributor' ? 0 : tier === 'distributor' ? 1 : 2,
+    tier,
+    status: index % 11 === 0 ? 'suspended' : 'active',
+    businessName: `${names[index % names.length]} ${index + 1}`,
+    city: ['Pune', 'Nashik', 'Mumbai', 'Nagpur', 'Kolhapur'][index % 5]!,
+    state: 'Maharashtra',
+  };
+});
+
+export const demoPartners: PartnerSummary[] = [...initialPartners, ...generatedPartners];
 
 export const demoApplications: ApplicationSummary[] = [
   {
@@ -159,18 +233,160 @@ export const demoAuditEvents = [
 ];
 
 export const demoRoles = [
-  { _id: '64a500000000000000000001', key: 'retailer', name: 'Retailer', kind: 'partner' },
-  { _id: '64a500000000000000000002', key: 'distributor', name: 'Distributor', kind: 'partner' },
+  {
+    _id: '64a500000000000000000001',
+    key: 'retailer',
+    name: 'Retailer',
+    kind: 'partner',
+    permissions: [
+      'identity.me',
+      'orders.read',
+      'orders.create',
+      'wallet.read',
+      'wallet.topup_request',
+      'services.read',
+    ],
+  },
+  {
+    _id: '64a500000000000000000002',
+    key: 'distributor',
+    name: 'Distributor',
+    kind: 'partner',
+    permissions: [
+      'identity.me',
+      'orders.read',
+      'orders.create',
+      'wallet.read',
+      'wallet.topup_request',
+      'services.read',
+      'team.read',
+    ],
+  },
   {
     _id: '64a500000000000000000003',
     key: 'master_distributor',
     name: 'Master distributor',
     kind: 'partner',
+    permissions: [
+      'identity.me',
+      'orders.read',
+      'orders.create',
+      'wallet.read',
+      'wallet.topup_request',
+      'services.read',
+      'team.read',
+    ],
   },
   {
     _id: '64a500000000000000000004',
     key: 'operations_admin',
     name: 'Operations administrator',
     kind: 'admin',
+    permissions: [
+      'identity.me',
+      'applications.read',
+      'applications.review',
+      'partners.read',
+      'partners.manage',
+      'orders.read',
+      'orders.process',
+    ],
+  },
+  {
+    _id: '64a500000000000000000005',
+    key: 'finance',
+    name: 'Finance administrator',
+    kind: 'admin',
+    permissions: [
+      'identity.me',
+      'wallet.read',
+      'wallet.topup_approve',
+      'payouts.read',
+      'payouts.manage',
+      'reports.read',
+    ],
+  },
+  {
+    _id: '64a500000000000000000006',
+    key: 'support',
+    name: 'Support administrator',
+    kind: 'admin',
+    permissions: ['identity.me', 'tickets.read', 'tickets.manage', 'partners.read'],
+  },
+  {
+    _id: '64a500000000000000000007',
+    key: 'content',
+    name: 'Content administrator',
+    kind: 'admin',
+    permissions: ['identity.me', 'content.read', 'content.manage'],
+  },
+  {
+    _id: '64a500000000000000000008',
+    key: 'partner_review',
+    name: 'Partner review administrator',
+    kind: 'admin',
+    permissions: ['identity.me', 'applications.read', 'applications.review', 'partners.read'],
+  },
+  {
+    _id: '64a500000000000000000009',
+    key: 'operations',
+    name: 'Operations staff',
+    kind: 'admin',
+    permissions: ['identity.me', 'orders.read', 'orders.process', 'services.read'],
   },
 ];
+
+const adminDemoUsers: DemoUser[] = [
+  demoUsers.admin,
+  ...['Operations', 'Finance', 'Partner review', 'Support', 'Content'].map((role, index) => ({
+    ...demoUsers.admin,
+    id: `64a70000000000000000000${index + 1}`,
+    email: `${role.toLowerCase().replaceAll(' ', '.')}@servicenetwork.demo`,
+    name: `${['Avery', 'Dev', 'Nisha', 'Rohan', 'Kavya', 'Manav'][index + 1]} ${['Mehta', 'Shah', 'Rao', 'Patel', 'Iyer'][index]}`,
+    roleNames: [`${role} ${index === 0 ? 'administrator' : 'staff'}`],
+    permissions:
+      index === 0
+        ? [
+            'identity.me',
+            'applications.read',
+            'applications.review',
+            'partners.read',
+            'partners.manage',
+            'admin_users.read',
+            'admin_users.write',
+            'audit.read',
+            'orders.read',
+            'orders.process',
+            'wallet.read',
+            'wallet.topup_approve',
+            'reports.read',
+            'services.read',
+            'services.manage',
+            'tickets.read',
+            'tickets.manage',
+            'settings.read',
+            'settings.manage',
+          ]
+        : ['identity.me', 'applications.read', 'partners.read', 'orders.read', 'wallet.read'],
+  })),
+];
+
+const partnerDemoUsers: DemoUser[] = [
+  demoUsers.partner,
+  ...(['distributor', 'retailer'] as const).map((tier, index): DemoUser => {
+    const partner = demoPartners.find((item) => item.tier === tier && item.status === 'active')!;
+    return {
+      id: `64a80000000000000000000${index + 1}`,
+      email: `${tier.replaceAll('_', '.')}@servicenetwork.demo`,
+      name: tier === 'distributor' ? 'Devendra Kulkarni' : 'Mira Shah',
+      kind: 'partner',
+      roleNames: [tier === 'distributor' ? 'Distributor' : 'Retailer'],
+      permissions: demoUsers.partner.permissions,
+      totpEnabled: false,
+      partner: { id: partner.id, code: partner.code, tier, status: partner.status },
+      ...(tier === 'retailer' ? { mustChangePassword: true } : {}),
+    };
+  }),
+];
+
+export const demoLoginUsers: DemoUser[] = [...adminDemoUsers, ...partnerDemoUsers];

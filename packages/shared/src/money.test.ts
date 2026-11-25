@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { Money, splitGst } from './money';
+import { calculateLineGst, Money, splitGst } from './money';
 
 test('Money accepts safe integer paise and rejects fractions or overflow', () => {
   assert.equal(Money.fromPaise(Number.MAX_SAFE_INTEGER).paise, Number.MAX_SAFE_INTEGER);
@@ -61,4 +61,17 @@ test('inter-state GST uses IGST and reconciles', () => {
 test('GST handles zero tax and rejects negative subtotal', () => {
   assert.equal(splitGst(Money.zero(), 1_800, true).total.paise, 0);
   assert.throws(() => splitGst(Money.fromPaise(-1), 1_800, false), RangeError);
+});
+
+test('GST rounds half-up on each line before adding, with odd paisa assigned to SGST', () => {
+  const result = calculateLineGst(
+    [
+      { subtotal: Money.fromPaise(3), rateBasisPoints: 1800 },
+      { subtotal: Money.fromPaise(3), rateBasisPoints: 1800 },
+    ],
+    true,
+  );
+  assert.equal(result.cgst.paise, 0);
+  assert.equal(result.sgst.paise, 2);
+  assert.equal(result.total.paise, 8);
 });

@@ -14,11 +14,12 @@ These M2 items are intentionally paused while the frontend demo is built. Do not
 ## Frontend demo
 
 - Branch: `frontend-demo`, created from M2 commit `f1aff40`.
-- Step 1 (foundation) is complete: shared frontend contracts, API mock adapter, realistic fixtures, brand configuration, opt-in demo toggle, light theme tokens, and shared public/admin/partner app shells.
-- Step 2 (public site and authentication) is complete: landing, services, partner paths, application and email verification, partner/admin login and recovery, and authenticator screens.
-- Checks: `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `pnpm e2e` passed; the full browser suite is 10/10. The responsive browser review opened all 21 current routes at 375, 768, and 1280 px, with no page or console errors and no horizontal overflow. It exercised the application, partner sign-in, and admin authenticator flows.
+- Step 1 foundation gap repair is complete: shared Mongo record Zod schemas/types, typed domain client, mock-default/HTTP transport selection, persisted realistic fixtures, reset control, permission/subtree enforcement, lifecycle and ledger rules, GST line rounding, and mock adapter unit tests. The complete clickable admin/partner screen inventory and business flow remain to be built.
+- Step 2 public/auth gaps (tokenized application and order status, forced password change, per-role sign-in shortcuts) are being closed before moving to admin.
+- Foundation checks on 2026-11-25: `make check` passed lint, typecheck, all unit tests, build, Mongo integration (1/1), and the authorization probe. The Step 2 browser and responsive checks will be recorded after those screens are committed.
 - Main 1280 px screenshots are committed in `docs/screenshots/`. The step-by-step screen checklist is in `docs/FRONTEND_PLAN.md`.
-- Step 3 (admin area) is next; the demo branch is not merged to `main`.
+- Local mock-only site is running at `http://localhost:3000` via `pnpm --filter @franchise-crm/web dev`; no database or Redis is required for the demo. The repository has no root `make dev` target, so this documented command currently starts the site.
+- Step 2 remains active; the demo branch is not merged to `main`.
 
 ## M0 — Foundation (weeks 1–2)
 

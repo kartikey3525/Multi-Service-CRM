@@ -87,3 +87,29 @@ export function splitGst(
   const sgst = tax.subtract(cgst);
   return { subtotal, cgst, sgst, igst: zero, total: subtotal.add(cgst).add(sgst) };
 }
+
+/** Roadmap invoice convention: round GST half-up per line before summing. */
+export function calculateLineGst(
+  lines: ReadonlyArray<{ subtotal: Money; rateBasisPoints: number }>,
+  intraState: boolean,
+): GstBreakdown {
+  let subtotal = Money.zero();
+  let cgst = Money.zero();
+  let sgst = Money.zero();
+  let igst = Money.zero();
+  for (const line of lines) {
+    if (line.subtotal.isNegative())
+      throw new RangeError('GST cannot be calculated on a negative subtotal.');
+    subtotal = subtotal.add(line.subtotal);
+    const tax = line.subtotal.percent(line.rateBasisPoints);
+    if (!intraState) {
+      igst = igst.add(tax);
+      continue;
+    }
+    const lineCgst = Money.fromPaise(Math.floor(tax.paise / 2));
+    cgst = cgst.add(lineCgst);
+    sgst = sgst.add(tax.subtract(lineCgst));
+  }
+  const total = subtotal.add(cgst).add(sgst).add(igst);
+  return { subtotal, cgst, sgst, igst, total };
+}

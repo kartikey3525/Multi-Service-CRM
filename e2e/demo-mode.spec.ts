@@ -2,8 +2,7 @@ import { expect, test } from '@playwright/test';
 
 test('partner can enter the mock workspace from the public shell', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Preview demo data' }).click();
-  await expect(page.getByRole('button', { name: 'Demo data on · exit' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Use live API' })).toBeVisible();
   await page.goto('/login');
   await page.getByLabel('Email address').fill('partner@servicenetwork.demo');
   await page.getByLabel('Password').fill('demo-password');
@@ -14,7 +13,7 @@ test('partner can enter the mock workspace from the public shell', async ({ page
 
 test('admin mock sign-in keeps the second-factor step', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Preview demo data' }).click();
+  await expect(page.getByRole('button', { name: 'Use live API' })).toBeVisible();
   await page.goto('/admin/login');
   await page.getByLabel('Email address').fill('admin@servicenetwork.demo');
   await page.getByLabel('Password').fill('demo-password');
