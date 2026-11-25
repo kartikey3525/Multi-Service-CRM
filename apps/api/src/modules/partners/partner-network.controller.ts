@@ -1,29 +1,25 @@
-import { Controller, Get, Req, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Req, ForbiddenException, Inject } from '@nestjs/common';
 import { Permission } from '@franchise-crm/shared';
 import type { Request } from 'express';
 import type { Actor } from '../../common/actor';
 import { RequirePermission } from '../identity/identity.decorator';
-import { PartnerModel } from './models';
+import { PartnersRepository } from './partners.repository';
 
 type RequestWithActor = Request & { actor?: Actor };
 
 @Controller('v1/partner/network')
 export class PartnerNetworkController {
+  constructor(@Inject(PartnersRepository) private readonly partners: PartnersRepository) {}
+
   @Get()
   @RequirePermission(Permission.teamRead, 'partner')
   async network(@Req() request: RequestWithActor) {
     const partnerId = request.actor?.partnerId;
     if (!partnerId) throw new ForbiddenException('Partner membership is missing.');
-    const parent = await PartnerModel.findById(partnerId).select('_id path').lean();
-    if (!parent) throw new ForbiddenException('Partner membership is unavailable.');
-    const rows = await PartnerModel.find({
-      path: parent._id,
-      _id: { $ne: parent._id },
-      status: { $ne: 'closed' },
-    })
-      .select('code parentId path tier status businessName city state')
-      .sort({ code: 1 })
-      .lean();
+    if (!request.actor) throw new ForbiddenException('Partner membership is missing.');
+    const result = await this.partners.listDownline(request.actor, partnerId);
+    if (!result) throw new ForbiddenException('Partner membership is unavailable.');
+    const { parent, rows } = result;
     const items = rows.map((row) => ({
       id: String(row._id),
       code: row.code,

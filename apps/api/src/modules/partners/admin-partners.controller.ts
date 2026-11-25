@@ -18,7 +18,8 @@ import { RequirePermission } from '../identity/identity.decorator';
 import { AuditService } from '../identity/audit.service';
 import { SessionService } from '../identity/session.service';
 import { encryptField } from '../identity/security';
-import { KycDocumentModel, PartnerModel, PartnerUserModel } from './models';
+import type { Actor } from '../../common/actor';
+import { PartnersRepository } from './partners.repository';
 
 const statusSchema = z.object({ status: z.enum(['active', 'suspended']) });
 const kycSchema = z
@@ -48,6 +49,7 @@ export class AdminPartnersController {
   constructor(
     @Inject(AuditService) private readonly audit: AuditService,
     @Inject(SessionService) private readonly sessions: SessionService,
+    @Inject(PartnersRepository) private readonly partners: PartnersRepository,
   ) {}
 
   @Get()
@@ -56,7 +58,9 @@ export class AdminPartnersController {
     @Query('status') status?: string,
     @Query('tier') tier?: string,
     @Query('q') q?: string,
+    @Req() request?: Request & { actor?: Actor },
   ) {
+    if (!request?.actor) throw new BadRequestException('Actor identity is missing.');
     const filter: Record<string, unknown> = {};
     if (status) filter.status = status;
     if (tier) filter.tier = tier;
@@ -71,7 +75,8 @@ export class AdminPartnersController {
         { email: { $regex: escaped, $options: 'i' } },
       ];
     }
-    const items = await PartnerModel.find(filter)
+    const items = await this.partners
+      .listPartners(request.actor, filter)
       .select(
         'code parentId path tier status applicationId ownerUserId businessName email mobile city state pin territoryId createdAt activatedAt',
       )
@@ -83,42 +88,59 @@ export class AdminPartnersController {
 
   @Get(':id')
   @RequirePermission(Permission.partnersRead, 'admin')
-  async detail(@Param('id') id: string) {
+  async detail(@Param('id') id: string, @Req() request: Request & { actor?: Actor }) {
     if (!Types.ObjectId.isValid(id)) throw new BadRequestException('Invalid partner ID.');
-    const partner = await PartnerModel.findById(id)
+    if (!request.actor) throw new BadRequestException('Actor identity is missing.');
+    const partner = await this.partners
+      .findPartner(request.actor, id)
       .select('-panEnc -gstinEnc -addressEnc -bankAccountEnc -bankIfscEnc')
       .lean();
     if (!partner) throw new BadRequestException('Partner not found.');
     const [documents, downlineCount] = await Promise.all([
-      KycDocumentModel.find({ ownerType: 'partner', ownerId: partner._id })
+      this.partners
+        .listKycDocuments(request.actor, { ownerType: 'partner', ownerId: partner._id })
         .select('-fileKey')
         .lean(),
-      PartnerModel.countDocuments({ parentId: partner._id }),
+      this.partners.countPartners(request.actor, { parentId: partner._id }),
     ]);
     return { partner, documents, downlineCount };
   }
 
   @Put(':id/status')
   @RequirePermission(Permission.partnersManage, 'admin')
-  async setStatus(@Param('id') id: string, @Body() body: unknown, @Req() request: Request) {
+  async setStatus(
+    @Param('id') id: string,
+    @Body() body: unknown,
+    @Req() request: Request & { actor?: Actor },
+  ) {
     if (!Types.ObjectId.isValid(id)) throw new BadRequestException('Invalid partner ID.');
     const parsed = statusSchema.safeParse(body);
     if (!parsed.success) throw new BadRequestException('Partner status is invalid.');
-    const before = await PartnerModel.findById(id).select('status ownerUserId code').lean();
+    if (!request.actor) throw new BadRequestException('Actor identity is missing.');
+    const before = await this.partners
+      .findPartner(request.actor, id, 'partners.manage')
+      .select('status ownerUserId code')
+      .lean();
     if (!before) throw new BadRequestException('Partner not found.');
     if (!['active', 'suspended'].includes(before.status))
       throw new BadRequestException('Only active partners may be suspended or reactivated.');
-    const updated = await PartnerModel.findOneAndUpdate(
-      { _id: id, status: before.status },
-      { $set: { status: parsed.data.status } },
-      { returnDocument: 'after' },
-    )
+    const updated = await this.partners
+      .updatePartnerAndReturn(
+        request.actor,
+        id,
+        { status: before.status },
+        { $set: { status: parsed.data.status } },
+        'after',
+      )
       .select('code status ownerUserId')
       .lean();
     if (!updated)
       throw new BadRequestException('Partner status changed concurrently. Refresh and retry.');
     if (parsed.data.status === 'suspended') {
-      const memberships = await PartnerUserModel.find({ partnerId: id }).select('userId').lean();
+      const memberships = await this.partners
+        .listPartnerUsers(request.actor, { partnerId: id })
+        .select('userId')
+        .lean();
       await Promise.all(
         memberships.map((membership) =>
           this.sessions.revokeUserSessions(String(membership.userId)),
@@ -137,11 +159,16 @@ export class AdminPartnersController {
 
   @Patch(':id/kyc-fields')
   @RequirePermission(Permission.partnersManage, 'admin')
-  async setKycFields(@Param('id') id: string, @Body() body: unknown, @Req() request: Request) {
+  async setKycFields(
+    @Param('id') id: string,
+    @Body() body: unknown,
+    @Req() request: Request & { actor?: Actor },
+  ) {
     if (!Types.ObjectId.isValid(id)) throw new BadRequestException('Invalid partner ID.');
     const parsed = kycSchema.safeParse(body);
     if (!parsed.success) throw new BadRequestException('KYC fields are invalid.');
-    if (!(await PartnerModel.exists({ _id: id })))
+    if (!request.actor) throw new BadRequestException('Actor identity is missing.');
+    if (!(await this.partners.existsPartner(request.actor, { _id: id }, 'partners.manage')))
       throw new BadRequestException('Partner not found.');
     const key = process.env.FIELD_ENCRYPTION_KEY;
     if (!key) throw new Error('FIELD_ENCRYPTION_KEY is not configured.');
@@ -152,7 +179,7 @@ export class AdminPartnersController {
         field === 'pan' ? 'panEnc' : field === 'bankAccount' ? 'bankAccountEnc' : `${field}Enc`;
       encrypted[storageField] = encryptField(value, key);
     }
-    await PartnerModel.updateOne({ _id: id }, { $set: encrypted });
+    await this.partners.updatePartner(request.actor, id, {}, { $set: encrypted });
     const masked = Object.fromEntries(
       Object.entries(parsed.data).map(([field, value]) => [field, mask(value ?? '')]),
     );

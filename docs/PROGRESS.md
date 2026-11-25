@@ -4,52 +4,75 @@
 
 The table records literal task checkboxes in this file. M0 tasks have explicit ticks; M1/M2 are described narratively and have no per-task ticks. The M1 Gate A owner acceptance is recorded; no other gate approval is inferred.
 
-| Task  | Ticked here?        | Recorded evidence                                                                           | Owner gate approval                   |
-| ----- | ------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------- |
-| M0-01 | Yes                 | Workspace/config files; commit history                                                      | Not recorded                          |
-| M0-02 | Yes                 | Compose health/smoke record; CI run `45361357670`                                           | Not recorded                          |
-| M0-03 | Yes                 | `health.integration.test.ts`; API build/check record                                        | Not recorded                          |
-| M0-04 | Yes                 | Playwright smoke record; Next build                                                         | Not recorded                          |
-| M0-05 | Yes                 | Migration `202611240001-foundation-metadata.js` recorded applied; no migration test named   | Not recorded                          |
-| M0-06 | Yes                 | Shared Money/permission/status unit tests                                                   | Not recorded                          |
-| M0-07 | Yes                 | Hosted CI run `45361357670`                                                                 | Not recorded                          |
-| M0-08 | Yes                 | `health.integration.test.ts`; Playwright smoke, 3 passed                                    | Not recorded                          |
-| M1-01 | No (narrative only) | M1 Mongo integration and local immutability probe recorded in M1 section                    | Gate A: accepted by owner, 2026-11-24 |
-| M1-02 | No (narrative only) | `health.integration.test.ts` auth/session/reset flows                                       | Gate A: accepted by owner, 2026-11-24 |
-| M1-03 | No (narrative only) | `health.integration.test.ts` TOTP/recovery flows                                            | Gate A: accepted by owner, 2026-11-24 |
-| M1-04 | No (narrative only) | `health.integration.test.ts` reset outbox/token flow                                        | Gate A: accepted by owner, 2026-11-24 |
-| M1-05 | No (narrative only) | `route-policy.test.ts`; lower-role 403 integration flow                                     | Gate A: accepted by owner, 2026-11-24 |
-| M1-06 | No (narrative only) | `actor.test.ts`; DB-backed hierarchy scope test                                             | Gate A: accepted by owner, 2026-11-24 |
-| M1-07 | No (narrative only) | `health.integration.test.ts` audit tests and immutability assertion                         | Gate A: accepted by owner, 2026-11-24 |
-| M1-08 | No (narrative only) | `pnpm e2e` 5/5 recorded for admin flows                                                     | Gate A: accepted by owner, 2026-11-24 |
-| M1-09 | No (narrative only) | `pnpm e2e` 5/5 recorded for partner auth/2FA flows                                          | Gate A: accepted by owner, 2026-11-24 |
-| M1-10 | No (narrative only) | `health.integration.test.ts` database-backed partner path isolation                         | Gate A: accepted by owner, 2026-11-24 |
-| M2-01 | No (narrative only) | Migrations 007–009 recorded applied; no migration test named                                | Not recorded                          |
-| M2-02 | No (narrative only) | `health.integration.test.ts` application, verification, capability upload, file validation  | Not recorded                          |
-| M2-03 | No (narrative only) | `health.integration.test.ts` review decisions and KYC retrieval                             | Not recorded                          |
-| M2-04 | No (narrative only) | `health.integration.test.ts` partner creation, hierarchy and parent rules                   | Not recorded                          |
-| M2-05 | No (narrative only) | Deferred M2 checklist; invite-driven applications/seat quotas not implemented               | Not recorded                          |
-| M2-06 | No (narrative only) | `health.integration.test.ts` private upload/download, cross-partner denial, audit-on-view   | Not recorded                          |
-| M2-07 | No (narrative only) | `health.integration.test.ts` partner status and hierarchy tests; partner 2FA reset deferred | Not recorded                          |
-| M2-08 | No (narrative only) | `health.integration.test.ts` encrypted KYC and masked display assertions                    | Not recorded                          |
-| M2-09 | No (narrative only) | `health.integration.test.ts` DB hierarchy scope; UI tree is present                         | Not recorded                          |
+| Task  | Ticked here?        | Recorded evidence                                                                                                      | Owner gate approval                   |
+| ----- | ------------------- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| M0-01 | Yes                 | Foundation commit `433e3f3`; workspace/config files                                                                    | Not recorded                          |
+| M0-02 | Yes                 | Compose health/smoke record; CI run `45361357670`                                                                      | Not recorded                          |
+| M0-03 | Yes                 | Foundation commit `433e3f3`; `health.integration.test.ts`                                                              | Not recorded                          |
+| M0-04 | Yes                 | Playwright smoke record; Next build                                                                                    | Not recorded                          |
+| M0-05 | Yes                 | Foundation commit `433e3f3`; migration `202611240001-foundation-metadata.js` recorded applied; no migration test named | Not recorded                          |
+| M0-06 | Yes                 | Foundation commit `433e3f3`; shared Money/permission/status unit tests                                                 | Not recorded                          |
+| M0-07 | Yes                 | Hosted CI run `45361357670`                                                                                            | Not recorded                          |
+| M0-08 | Yes                 | `health.integration.test.ts`; Playwright smoke, 3 passed                                                               | Not recorded                          |
+| M1-01 | No (narrative only) | M1 Mongo integration and local immutability probe recorded in M1 section                                               | Gate A: accepted by owner, 2026-11-24 |
+| M1-02 | No (narrative only) | `health.integration.test.ts` auth/session/reset flows                                                                  | Gate A: accepted by owner, 2026-11-24 |
+| M1-03 | No (narrative only) | `health.integration.test.ts` TOTP/recovery flows                                                                       | Gate A: accepted by owner, 2026-11-24 |
+| M1-04 | No (narrative only) | `health.integration.test.ts` reset outbox/token flow                                                                   | Gate A: accepted by owner, 2026-11-24 |
+| M1-05 | No (narrative only) | `route-policy.test.ts`; lower-role 403 integration flow                                                                | Gate A: accepted by owner, 2026-11-24 |
+| M1-06 | No (narrative only) | `actor.test.ts`; DB-backed hierarchy scope test                                                                        | Gate A: accepted by owner, 2026-11-24 |
+| M1-07 | No (narrative only) | `health.integration.test.ts` audit tests and immutability assertion                                                    | Gate A: accepted by owner, 2026-11-24 |
+| M1-08 | No (narrative only) | `pnpm e2e` 5/5 recorded for admin flows                                                                                | Gate A: accepted by owner, 2026-11-24 |
+| M1-09 | No (narrative only) | `pnpm e2e` 5/5 recorded for partner auth/2FA flows                                                                     | Gate A: accepted by owner, 2026-11-24 |
+| M1-10 | No (narrative only) | `health.integration.test.ts` database-backed partner path isolation                                                    | Gate A: accepted by owner, 2026-11-24 |
+| M2-01 | No (narrative only) | Migrations 007–009 recorded applied; no migration test named                                                           | Not recorded                          |
+| M2-02 | No (narrative only) | `health.integration.test.ts` application, verification, capability upload, file validation                             | Not recorded                          |
+| M2-03 | No (narrative only) | `health.integration.test.ts` review decisions and KYC retrieval                                                        | Not recorded                          |
+| M2-04 | No (narrative only) | `health.integration.test.ts` partner creation, hierarchy and parent rules                                              | Not recorded                          |
+| M2-05 | No (narrative only) | Deferred M2 checklist; invite-driven applications/seat quotas not implemented                                          | Not recorded                          |
+| M2-06 | No (narrative only) | `health.integration.test.ts` private upload/download, cross-partner denial, audit-on-view                              | Not recorded                          |
+| M2-07 | No (narrative only) | `health.integration.test.ts` partner status and hierarchy tests; partner 2FA reset deferred                            | Not recorded                          |
+| M2-08 | No (narrative only) | `health.integration.test.ts` encrypted KYC and masked display assertions                                               | Not recorded                          |
+| M2-09 | No (narrative only) | `health.integration.test.ts` DB hierarchy scope; UI tree is present                                                    | Not recorded                          |
 
 ### Verification status
 
 “Unverified” means no execution evidence after D-01 in this workspace; historical evidence remains noted in the relevant milestone section.
 
-| Item                              | Last verified (date, by whom, how)                                                     | Status                |
-| --------------------------------- | -------------------------------------------------------------------------------------- | --------------------- |
-| Mongo integration tests           | 2026-11-25, Codex, `make check` stopped before Docker-backed API integration           | Unverified            |
-| Immutability probe                | 2026-11-24, Codex, local Mongo authorization probe recorded in M1 section              | Unverified since D-01 |
-| DB-backed isolation tests         | 2026-11-24, Codex, Mongo integration path-isolation test recorded in M1/M2 sections    | Unverified since D-01 |
-| Playwright suite                  | 2026-11-25, owner-reported prior run without pasted output; no run by Codex since D-01 | Unverified            |
-| Responsive checks at 375/768/1280 | 2026-11-25, earlier recorded route sweep; no run by Codex since D-01                   | Unverified            |
-| Accessibility checks              | No dated execution evidence recorded                                                   | Unverified            |
+| Item                              | Last verified (date, by whom, how)                                                     | Status     |
+| --------------------------------- | -------------------------------------------------------------------------------------- | ---------- |
+| Mongo integration tests           | 2026-11-25, Codex, `make check` stopped before Docker-backed API integration           | unverified |
+| Immutability probe                | 2026-11-24, Codex, local Mongo authorization probe recorded in M1 section              | unverified |
+| DB-backed isolation tests         | 2026-11-24, Codex, Mongo integration path-isolation test recorded in M1/M2 sections    | unverified |
+| Playwright suite                  | 2026-11-25, owner-reported prior run without pasted output; no run by Codex since D-01 | unverified |
+| Responsive checks at 375/768/1280 | 2026-11-25, earlier recorded route sweep; no run by Codex since D-01                   | unverified |
+| Accessibility checks              | No dated execution evidence recorded                                                   | unverified |
+
+## R-02 — Repository scoping (in progress)
+
+The baseline inventory below is from commit `ef7022e` before the refactor. Runtime partner-scoped access was concentrated in `PartnerModel`, `PartnerUserModel`, and `KycDocumentModel`; no real API models/queries for customers, orders, leads, wallets, invoices, or tickets exist yet (those screens are frontend mock data).
+
+| Baseline file and line                                                           | Collection and operation                                                       |
+| -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `apps/api/src/modules/files/files.service.ts:97`                                 | `kyc_documents` create                                                         |
+| `apps/api/src/modules/files/files.service.ts:166,198`                            | `kyc_documents` retrieve by ID and partner list                                |
+| `apps/api/src/modules/files/files.service.ts:237`                                | `partners` existence/status check                                              |
+| `apps/api/src/modules/identity/auth.service.ts:205,210`                          | `partner_users` membership and `partners` profile lookup                       |
+| `apps/api/src/modules/identity/permission.guard.ts:80,84,93`                     | membership, partner profile, and subtree expansion                             |
+| `apps/api/src/modules/partners/admin-partners.controller.ts:74,88,93,96`         | partner list/detail, KYC list, downline count                                  |
+| `apps/api/src/modules/partners/admin-partners.controller.ts:107,111,121,144,155` | partner status read/update, membership list, existence, encrypted-field update |
+| `apps/api/src/modules/partners/applications.service.ts:219,230,340`              | application KYC list, eligible partner list, parent lookup                     |
+| `apps/api/src/modules/partners/applications.service.ts:394,417,421`              | partner creation, membership creation, KYC owner transfer                      |
+| `apps/api/src/modules/partners/partner-network.controller.ts:17,19`              | current partner and subtree read                                               |
+
+All runtime calls for these three partner-scoped models now go through `apps/api/src/modules/partners/partners.repository.ts`. Global/public intake collections `applications` and `territories` remain part of the application workflow and are not partner-owned; their public token/capability filters are documented as a separate scope boundary. The static guard now fails on an import outside repositories/model definitions and on a repository query missing `scopeToActor` or the named, permission-checked `SCOPE_BYPASS`.
+
+The Mongo-backed integration test now queries the subtree through `PartnersRepository` and asserts another partner is absent; KYC retrieval continues to assert an outside partner is denied. The endpoint suite asserts a partner role gets 403 from `/api/v1/admin/partners`.
+
+**R-02 checks, 2026-11-25:** `make check` passed lint, typecheck, unit tests (web 15/15, shared 17/17, API 13 passed/1 Mongo-only integration skipped), and build (Next.js generated 50 routes; NestJS build passed). It stopped before API integration because Docker access was denied at `/Users/admin/.docker/run/docker.sock`. The named DB-backed test `API readiness and repository partner scoping against a throwaway MongoDB database` was skipped without `MONGODB_TEST_URI`; the repository subtree/KYC isolation assertions in that flow and the Mongo authorization probe did not run. No server or browser was started and Playwright, responsive, and accessibility checks were not run. Separate API lint, typecheck, unit tests, and build also passed after the repository change.
 
 ## D-01 — Stack reconciliation (in progress)
 
-The repository uses Next.js App Router and NestJS on `@nestjs/platform-express`; MongoDB replica set/Mongoose/migrate-mongo; and BullMQ on Redis. Reconciled the roadmap and architecture docs to this implementation, documented the installed/missing web UI libraries, corrected the translation path, MongoDB runtime-role and repository-scoping language, and clarified that frontend Steps 4–6 are mock-adapter demo work rather than M7/M9/M10 completion. Added a static repository query scope test. The repository layer is not yet present in API modules; current direct Mongoose usage is recorded in `docs/QUESTIONS.md`, so this test protects the new layer but does not claim to cover existing queries.
+The repository uses Next.js App Router and NestJS on `@nestjs/platform-express`; MongoDB replica set/Mongoose/migrate-mongo; and BullMQ on Redis. Reconciled the roadmap and architecture docs to this implementation, documented the installed/missing web UI libraries, corrected the translation path, MongoDB runtime-role and repository-scoping language, and clarified that frontend Steps 4–6 are mock-adapter demo work rather than M7/M9/M10 completion. At D-01, the repository layer was not present; R-02 now addresses live partner-scoped model access and strengthens the test enforcement.
 
 **D-01 verification, 2026-11-25:** `pnpm --filter @franchise-crm/api test` passed (11 passed, 1 Mongo-only integration skipped without `MONGODB_TEST_URI`). `make check` passed lint, typecheck, unit tests (web 10/10, shared 17/17, API 11 passed/1 skipped), and build (50 routes); its Docker API integration step could not connect to `/Users/admin/.docker/run/docker.sock` (`permission denied`), so Mongo integration and the authorization probe did not run. `make help` prints the stack and command list. `docker compose config` confirms the production-style web service has no volume mount; no services were started. D-01 docs/tests are committed as `9a1a91f`; Docker-backed checks remain outstanding in this environment.
 Work in task order. M1 was accepted by the owner on local evidence; live staging checks are deferred until release preparation.

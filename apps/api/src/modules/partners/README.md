@@ -16,6 +16,8 @@ Partner applications, hierarchy, profiles, and KYC.
 
 Partner hierarchy scopes partner queries through the materialized path; KYC files remain private; non-active partners cannot perform writes, except pending-payment KYC upload. Transaction/top-up routes do not exist yet and must enforce the same active-only invariant in M4/M5.
 
+`PartnersRepository` is the API layer that imports and accesses the `PartnerModel`, `PartnerUserModel`, and `KycDocumentModel`. Methods accept an `Actor` and apply `scopeToActor`; administrator bypasses are named, permission-checked operations. The permission guard's initial membership lookup is constrained to the authenticated user ID, then it loads that partner and expands only the materialized subtree. Application-only collections (`applications`, `territories`) remain in the application workflow and are not partner-owned collections.
+
 ## Tests that protect this module
 
-Application decisions, hierarchy scoping, and cross-partner isolation.
+`repository-scope.test.ts` rejects partner model imports outside repositories/model definitions and rejects unscoped repository queries. Mongo-backed `health.integration.test.ts` exercises repository subtree isolation, KYC document isolation, and endpoint 403 behavior. Application decisions and hierarchy provisioning are also covered by that integration flow.

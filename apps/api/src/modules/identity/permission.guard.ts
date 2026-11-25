@@ -12,7 +12,7 @@ import { RoleModel, UserModel, type IdentityKind } from './models';
 import type { Actor } from '../../common/actor';
 import { ALLOW_PREAUTH, PUBLIC_ROUTE, REQUIRED_PERMISSION } from './identity.decorator';
 import { SessionService } from './session.service';
-import { PartnerModel, PartnerUserModel } from '../partners/models';
+import { PartnersRepository } from '../partners/partners.repository';
 
 export type RequestActor = Actor;
 
@@ -31,6 +31,7 @@ export class PermissionGuard implements CanActivate {
   constructor(
     @Inject(Reflector) private readonly reflector: Reflector,
     @Inject(SessionService) private readonly sessions: SessionService,
+    @Inject(PartnersRepository) private readonly partners: PartnersRepository,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -77,24 +78,20 @@ export class PermissionGuard implements CanActivate {
       roleKeys: roles.map((role) => role.key),
     };
     if (user.kind === 'partner') {
-      const membership = await PartnerUserModel.findOne({ userId: user._id, status: 'active' })
-        .select('partnerId')
-        .lean();
+      actor.partnerPath = [actor.userId];
+      const membership = await this.partners.membershipForAuthenticatedUser(actor);
+      if (membership) actor.partnerPath = [String(membership.partnerId)];
       const partner = membership
-        ? await PartnerModel.findOne({ _id: membership.partnerId, status: { $ne: 'closed' } })
-            .select('_id path status')
-            .lean()
+        ? await this.partners.partnerForAuthenticatedMembership(actor, membership.partnerId)
         : null;
       if (!partner || !partner.path.length)
         throw new ForbiddenException('An active partner membership is required.');
       actor.partnerId = String(partner._id);
       actor.partnerStatus = partner.status;
-      actor.partnerPath = (
-        await PartnerModel.distinct('_id', {
-          path: partner._id,
-          status: { $ne: 'closed' },
-        })
-      ).map(String);
+      actor.partnerPath = await this.partners.expandPartnerPath(
+        { ...actor, partnerPath: [String(partner._id)] },
+        partner._id,
+      );
       const isWrite = !['GET', 'HEAD', 'OPTIONS'].includes(request.method.toUpperCase());
       const allowsPendingKyc =
         metadata.permission === 'files.upload' && partner.status === 'pending_payment';

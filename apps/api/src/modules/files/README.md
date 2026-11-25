@@ -22,4 +22,4 @@ Every download is permission checked; keys are not public; uploads enforce type 
 
 ## Tests that protect this module
 
-Authorization, expiry, and rejected file types.
+Authorization, expiry, and rejected file types are exercised in `health.integration.test.ts`. KYC metadata reads and writes use `PartnersRepository`, which applies the actor's partner scope before returning documents; successful views still create the immutable audit event.

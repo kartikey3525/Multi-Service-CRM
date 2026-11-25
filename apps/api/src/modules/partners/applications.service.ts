@@ -17,15 +17,10 @@ import {
 } from '../identity/models';
 import { digestToken, hashPassword, randomToken } from '../identity/security';
 import { RateLimitService } from '../identity/rate-limit.service';
-import {
-  TerritoryModel,
-  ApplicationModel,
-  KycDocumentModel,
-  PartnerModel,
-  PartnerUserModel,
-  type ApplicationStatus,
-} from './models';
+import { TerritoryModel, ApplicationModel, type ApplicationStatus } from './models';
 import { pinMatchesPrefixes } from './territories';
+import type { Actor } from '../../common/actor';
+import { PartnersRepository } from './partners.repository';
 
 export interface NewApplication {
   applicantName: string;
@@ -41,7 +36,10 @@ export interface NewApplication {
 
 @Injectable()
 export class ApplicationsService {
-  constructor(@Inject(RateLimitService) private readonly rateLimits: RateLimitService) {}
+  constructor(
+    @Inject(RateLimitService) private readonly rateLimits: RateLimitService,
+    @Inject(PartnersRepository) private readonly partners: PartnersRepository,
+  ) {}
 
   async territories(state?: string) {
     const query = state
@@ -210,24 +208,27 @@ export class ApplicationsService {
     return { items, page, pageSize, total };
   }
 
-  async detail(id: string) {
+  async detail(actor: Actor, id: string) {
     if (!Types.ObjectId.isValid(id)) throw new BadRequestException('Invalid application ID.');
     const application = await ApplicationModel.findById(id)
       .select('-emailVerificationTokenHash -emailVerificationExpiresAt')
       .lean();
     if (!application) throw new NotFoundException('Application not found.');
-    const documents = await KycDocumentModel.find({
-      ownerType: 'application',
-      ownerId: application._id,
-    })
+    const documents = await this.partners
+      .listKycDocuments(
+        actor,
+        { ownerType: 'application', ownerId: application._id },
+        'applications.read',
+      )
       .select('-fileKey')
       .sort({ createdAt: -1 })
       .lean();
     return { application, documents };
   }
 
-  async eligibleParents(tier: 'master_distributor' | 'distributor') {
-    const rows = await PartnerModel.find({ tier, status: 'active' })
+  async eligibleParents(actor: Actor, tier: 'master_distributor' | 'distributor') {
+    const rows = await this.partners
+      .listPartners(actor, { tier, status: 'active' }, 'applications.read')
       .select('_id code businessName city state')
       .sort({ code: 1 })
       .limit(500)
@@ -310,9 +311,10 @@ export class ApplicationsService {
     return { updated: true };
   }
 
-  async approve(applicationId: string, actorUserId: string, parentId?: string) {
+  async approve(applicationId: string, actor: Actor, parentId?: string) {
     if (!Types.ObjectId.isValid(applicationId))
       throw new BadRequestException('Invalid application ID.');
+    const actorUserId = actor.userId;
     const session = await mongoose.startSession();
     let partnerCode = '';
     try {
@@ -337,11 +339,13 @@ export class ApplicationsService {
         if (requiredParentTier) {
           if (!parentId || !Types.ObjectId.isValid(parentId))
             throw new BadRequestException('Select an active partner at the required higher tier.');
-          const parent = await PartnerModel.findOne({
-            _id: parentId,
-            tier: requiredParentTier,
-            status: 'active',
-          }).session(session);
+          const parent = await this.partners
+            .findPartnerByFilter(
+              actor,
+              { _id: parentId, tier: requiredParentTier, status: 'active' },
+              'applications.review',
+            )
+            .session(session);
           if (!parent) throw new BadRequestException('The selected parent partner is unavailable.');
           parentPath = parent.path;
           resolvedParentId = parent._id;
@@ -391,38 +395,34 @@ export class ApplicationsService {
         );
         if (!user) throw new Error('Partner owner insert returned no user.');
         const path = [...parentPath, partnerId];
-        await PartnerModel.create(
-          [
-            {
-              _id: partnerId,
-              code,
-              ...(resolvedParentId ? { parentId: resolvedParentId } : {}),
-              path,
-              tier: application.requestedTier,
-              status: 'pending_payment',
-              applicationId: application._id,
-              ownerUserId: user._id,
-              businessName: application.businessName,
-              legalType: application.legalType,
-              mobile: application.mobile,
-              email: application.email,
-              city: application.city,
-              state: application.state,
-              pin: application.pin,
-              ...(application.territoryId ? { territoryId: application.territoryId } : {}),
-            },
-          ],
-          { session },
+        await this.partners.createPartner(
+          actor,
+          {
+            _id: partnerId,
+            code,
+            ...(resolvedParentId ? { parentId: resolvedParentId } : {}),
+            path,
+            tier: application.requestedTier,
+            status: 'pending_payment',
+            applicationId: application._id,
+            ownerUserId: user._id,
+            businessName: application.businessName,
+            legalType: application.legalType,
+            mobile: application.mobile,
+            email: application.email,
+            city: application.city,
+            state: application.state,
+            pin: application.pin,
+            ...(application.territoryId ? { territoryId: application.territoryId } : {}),
+          },
+          session,
         );
-        await PartnerUserModel.create(
-          [{ partnerId, userId: user._id, role: 'owner', staffPermissions: [], status: 'active' }],
-          { session },
+        await this.partners.createPartnerUser(
+          actor,
+          { partnerId, userId: user._id, role: 'owner', staffPermissions: [], status: 'active' },
+          session,
         );
-        await KycDocumentModel.updateMany(
-          { ownerType: 'application', ownerId: application._id },
-          { $set: { ownerType: 'partner', ownerId: partnerId } },
-          { session },
-        );
+        await this.partners.moveApplicationKycToPartner(actor, application._id, partnerId, session);
         const inviteToken = randomToken();
         await PasswordResetModel.create(
           [

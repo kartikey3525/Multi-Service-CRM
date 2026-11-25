@@ -14,9 +14,10 @@ import type { Request } from 'express';
 import { z } from 'zod';
 import { RequirePermission } from '../identity/identity.decorator';
 import { ApplicationsService } from './applications.service';
+import type { Actor } from '../../common/actor';
 import type { ApplicationStatus } from './models';
 
-type RequestWithActor = Request & { actor?: { userId: string } };
+type RequestWithActor = Request & { actor?: Actor };
 const decisionSchema = z.object({ reason: z.string().trim().min(5).max(1000) });
 const approvalSchema = z.object({ parentId: z.string().optional() });
 
@@ -54,27 +55,25 @@ export class AdminApplicationsController {
 
   @Get('eligible-parents')
   @RequirePermission(Permission.applicationsRead, 'admin')
-  eligibleParents(@Query('tier') tier?: string) {
+  eligibleParents(@Query('tier') tier: string | undefined, @Req() request: RequestWithActor) {
     if (tier !== 'master_distributor' && tier !== 'distributor')
       throw new BadRequestException('A valid parent tier is required.');
-    return this.applications.eligibleParents(tier);
+    if (!request.actor) throw new BadRequestException('Reviewer identity is missing.');
+    return this.applications.eligibleParents(request.actor, tier);
   }
 
   @Get(':id')
   @RequirePermission(Permission.applicationsRead, 'admin')
-  detail(@Param('id') id: string) {
-    return this.applications.detail(id);
+  detail(@Param('id') id: string, @Req() request: RequestWithActor) {
+    if (!request.actor) throw new BadRequestException('Reviewer identity is missing.');
+    return this.applications.detail(request.actor, id);
   }
 
   @Post(':id/approve')
   @RequirePermission(Permission.applicationsReview, 'admin')
   approve(@Param('id') id: string, @Body() body: unknown, @Req() request: RequestWithActor) {
     if (!request.actor) throw new BadRequestException('Reviewer identity is missing.');
-    return this.applications.approve(
-      id,
-      request.actor.userId,
-      parse(approvalSchema, body).parentId,
-    );
+    return this.applications.approve(id, request.actor, parse(approvalSchema, body).parentId);
   }
 
   @Post(':id/reject')

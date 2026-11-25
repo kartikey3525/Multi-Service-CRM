@@ -11,12 +11,13 @@ import { HttpExceptionFilter } from '../src/common/http-exception.filter';
 import { scopeToActor } from '../src/common/actor';
 import { requestIdMiddleware } from '../src/common/request-id.middleware';
 import { decryptField, hashPassword } from '../src/modules/identity/security';
+import { PartnersRepository } from '../src/modules/partners/partners.repository';
 import { makePartnerFixture } from './factories/partner.factory';
 
 const testUri = process.env.MONGODB_TEST_URI;
 
 test(
-  'API readiness and request IDs against a throwaway MongoDB database',
+  'API readiness and repository partner scoping against a throwaway MongoDB database',
   {
     skip: testUri ? false : 'Set MONGODB_TEST_URI to a test-only MongoDB replica set.',
   },
@@ -441,27 +442,39 @@ test(
         state: 'Delhi',
         pin: '110001',
       });
-      const actorPartnerIds = (
-        await PartnerModel.distinct('_id', { path: partnerRecordId, status: { $ne: 'closed' } })
-      ).map(String);
-      const scopedPartners = await PartnerModel.find(
-        scopeToActor(
+      const repository = app.get(PartnersRepository);
+      const scopedPartners = await repository
+        .listPartners(
           {
             userId: String(partner._id),
             kind: 'partner',
-            roleKeys: [],
-            permissions: new Set(),
-            partnerPath: actorPartnerIds,
+            roleKeys: ['retailer'],
+            permissions: new Set(['team.read']),
+            partnerId: String(partnerRecordId),
+            partnerPath: [String(partnerRecordId)],
           },
           {},
-          '_id',
-        ),
-      )
+          'team.read',
+        )
         .select('_id')
         .lean();
       assert.deepEqual(
         new Set(scopedPartners.map((row) => String(row._id))),
         new Set([String(partnerRecordId), String(downlineRecordId)]),
+      );
+      assert.equal(
+        scopedPartners.some((row) => String(row._id) === String(createdPartner._id)),
+        false,
+      );
+      const scopedPartnerNetwork = await request(app.getHttpServer())
+        .get('/api/v1/partner/network')
+        .set('Cookie', partnerCookies)
+        .expect(200);
+      assert.equal(
+        scopedPartnerNetwork.body.items.some(
+          (item: { id: string }) => item.id === String(createdPartner._id),
+        ),
+        false,
       );
       const pdf = Buffer.from('%PDF-1.7\nprivate kyc fixture\n%%EOF');
       const uploadedKyc = await request(app.getHttpServer())
@@ -552,6 +565,10 @@ test(
         .expect(403);
       await request(app.getHttpServer())
         .get('/api/v1/admin/users')
+        .set('Cookie', partnerCookies)
+        .expect(403);
+      await request(app.getHttpServer())
+        .get('/api/v1/admin/partners')
         .set('Cookie', partnerCookies)
         .expect(403);
 

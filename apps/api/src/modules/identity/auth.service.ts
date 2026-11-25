@@ -16,7 +16,8 @@ import {
 } from './security';
 import { provisionIdentity } from './provisioning';
 import { RateLimitService } from './rate-limit.service';
-import { PartnerModel, PartnerUserModel } from '../partners/models';
+import { PartnersRepository } from '../partners/partners.repository';
+import type { Actor } from '../../common/actor';
 
 const config = loadConfig();
 const invalidCredentials = 'Invalid email or password.';
@@ -29,6 +30,7 @@ export class AuthService {
   constructor(
     @Inject(SessionService) private readonly sessions: SessionService,
     @Inject(RateLimitService) private readonly rateLimits: RateLimitService,
+    @Inject(PartnersRepository) private readonly partners: PartnersRepository,
   ) {}
 
   async initialize(): Promise<void> {
@@ -202,14 +204,23 @@ export class AuthService {
       .lean();
     const membership =
       user.kind === 'partner'
-        ? await PartnerUserModel.findOne({ userId: user._id, status: 'active' })
-            .select('partnerId')
-            .lean()
+        ? await this.partners.membershipForAuthenticatedUser({
+            userId: String(user._id),
+            kind: 'partner',
+            roleKeys: [],
+            permissions: new Set(),
+            partnerPath: [String(user._id)],
+          })
         : null;
+    const membershipActor: Actor = {
+      userId: String(user._id),
+      kind: 'partner',
+      roleKeys: [],
+      permissions: new Set(),
+      partnerPath: membership ? [String(membership.partnerId)] : [],
+    };
     const partner = membership
-      ? await PartnerModel.findById(membership.partnerId)
-          .select('code tier status businessName')
-          .lean()
+      ? await this.partners.partnerForAuthenticatedMembership(membershipActor, membership.partnerId)
       : null;
     return {
       user: {

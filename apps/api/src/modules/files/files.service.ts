@@ -20,7 +20,7 @@ import type { Request } from 'express';
 import type { Actor } from '../../common/actor';
 import { AuditModel } from '../identity/models';
 import { ApplicationModel } from '../partners/models';
-import { KycDocumentModel, PartnerModel } from '../partners/models';
+import { PartnersRepository } from '../partners/partners.repository';
 import { RateLimitService } from '../identity/rate-limit.service';
 import { digestToken } from '../identity/security';
 
@@ -44,7 +44,10 @@ export interface KycUploadFile {
 
 @Injectable()
 export class FilesService implements OnModuleInit {
-  constructor(@Inject(RateLimitService) private readonly rateLimits: RateLimitService) {}
+  constructor(
+    @Inject(RateLimitService) private readonly rateLimits: RateLimitService,
+    @Inject(PartnersRepository) private readonly partners: PartnersRepository,
+  ) {}
   private readonly bucket = process.env.S3_BUCKET ?? 'crm-private-files';
   private readonly s3 = new S3Client({
     endpoint: process.env.S3_ENDPOINT ?? 'http://127.0.0.1:9000',
@@ -94,7 +97,7 @@ export class FilesService implements OnModuleInit {
       }),
     );
     try {
-      const document = await KycDocumentModel.create({
+      const document = await this.partners.createKycDocument(actor, {
         ownerType: input.ownerType,
         ownerId,
         docType: input.docType,
@@ -163,8 +166,15 @@ export class FilesService implements OnModuleInit {
 
   async retrieve(request: Request, actor: Actor, documentId: string) {
     if (!Types.ObjectId.isValid(documentId)) throw new BadRequestException('Invalid document ID.');
-    const document = await KycDocumentModel.findById(documentId).select('+fileKey').lean();
-    if (!document) throw new NotFoundException('KYC document not found.');
+    const document = await this.partners
+      .findKycDocument(actor, documentId)
+      .select('+fileKey')
+      .lean();
+    if (!document) {
+      if (actor.kind === 'partner')
+        throw new ForbiddenException('This KYC document is outside your partner network.');
+      throw new NotFoundException('KYC document not found.');
+    }
     await this.assertCanReadOwner(actor, document.ownerType, document.ownerId);
     const object = await this.s3.send(
       new GetObjectCommand({ Bucket: this.bucket, Key: document.fileKey }),
@@ -195,10 +205,11 @@ export class FilesService implements OnModuleInit {
 
   async listMine(actor: Actor) {
     if (actor.kind !== 'partner' || !actor.partnerId) throw new ForbiddenException();
-    const rows = await KycDocumentModel.find({
-      ownerType: 'partner',
-      ownerId: new Types.ObjectId(actor.partnerId),
-    })
+    const rows = await this.partners
+      .listKycDocuments(actor, {
+        ownerType: 'partner',
+        ownerId: new Types.ObjectId(actor.partnerId),
+      })
       .select('-fileKey')
       .sort({ createdAt: -1 })
       .lean();
@@ -234,7 +245,11 @@ export class FilesService implements OnModuleInit {
     )
       throw new ForbiddenException('Partners may upload KYC only to their own profile.');
     if (
-      !(await PartnerModel.exists({ _id: ownerId, status: { $in: ['pending_payment', 'active'] } }))
+      !(await this.partners.existsPartner(
+        actor,
+        { _id: ownerId, status: { $in: ['pending_payment', 'active'] } },
+        'files.upload',
+      ))
     )
       throw new ForbiddenException('This partner profile is not accepting KYC documents.');
   }

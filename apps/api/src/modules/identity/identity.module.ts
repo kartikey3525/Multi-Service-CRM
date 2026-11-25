@@ -9,8 +9,10 @@ import { PermissionGuard } from './permission.guard';
 import { RedisStore } from './redis.store';
 import { RateLimitService } from './rate-limit.service';
 import { SessionService } from './session.service';
+import { PartnerDataModule } from '../partners/partner-data.module';
 
 @Module({
+  imports: [PartnerDataModule],
   controllers: [AuthController, AdminUsersController, AuditController],
   providers: [
     RedisStore,

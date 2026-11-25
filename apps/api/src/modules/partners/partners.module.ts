@@ -5,9 +5,10 @@ import { AdminApplicationsController } from './admin-applications.controller';
 import { ApplicationsService } from './applications.service';
 import { AdminPartnersController } from './admin-partners.controller';
 import { PartnerNetworkController } from './partner-network.controller';
+import { PartnerDataModule } from './partner-data.module';
 
 @Module({
-  imports: [IdentityModule],
+  imports: [IdentityModule, PartnerDataModule],
   controllers: [
     ApplicationsController,
     AdminApplicationsController,
