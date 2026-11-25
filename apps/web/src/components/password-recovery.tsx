@@ -26,8 +26,12 @@ export function ForgotPasswordForm({ kind }: { kind: 'admin' | 'partner' }) {
   }
   return (
     <main className="portal">
-      <section className="card">
+      <section className="card reveal">
+        <p className="eyebrow">
+          {kind === 'admin' ? messages.auth.adminLogin : messages.auth.partnerLogin}
+        </p>
         <h1>{messages.auth.forgotPassword}</h1>
+        <p className="auth-form-subtitle">{messages.auth.recoverySubtitle}</p>
         {sent ? (
           <p role="status">{messages.auth.resetSent}</p>
         ) : (
@@ -52,7 +56,10 @@ export function ForgotPasswordForm({ kind }: { kind: 'admin' | 'partner' }) {
             </button>
           </form>
         )}
-        <a className="text-button" href={kind === 'admin' ? '/admin/login' : '/login'}>
+        <a
+          className="text-button recovery-back-link"
+          href={kind === 'admin' ? '/admin/login' : '/login'}
+        >
           {messages.auth.signIn}
         </a>
       </section>
@@ -86,8 +93,10 @@ export function ResetPasswordForm() {
   }
   return (
     <main className="portal">
-      <section className="card">
+      <section className="card reveal">
+        <p className="eyebrow">{messages.auth.partnerLogin}</p>
         <h1>{messages.auth.resetPassword}</h1>
+        <p className="auth-form-subtitle">{messages.auth.resetSubtitle}</p>
         {updated ? (
           <>
             <p role="status">{messages.auth.passwordUpdated}</p>

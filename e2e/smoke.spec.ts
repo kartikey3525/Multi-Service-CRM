@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 test('public site renders the franchise landing page', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('local service business');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('local business');
 });
 
 test('partner application checks availability and submits for email verification', async ({
@@ -78,7 +78,7 @@ test('admin navigation only shows links allowed by the signed-in role', async ({
   );
 
   await page.goto('/admin');
-  await expect(page.getByRole('link', { name: 'Home' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Home', exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Users' })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Audit log' })).toHaveCount(0);
 });

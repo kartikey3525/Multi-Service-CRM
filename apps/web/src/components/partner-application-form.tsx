@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import messages from '../messages/en.json';
-import { apiGet, apiPost, requestCsrfToken } from '../lib/api-client';
+import { apiGet, apiPost, apiUpload, requestCsrfToken } from '../lib/api-client';
 
 type Tier = 'master_distributor' | 'distributor' | 'retailer';
 type FormValues = {
@@ -37,6 +37,12 @@ export function PartnerApplicationForm() {
   const [busy, setBusy] = useState(false);
   const [kycFile, setKycFile] = useState<File>();
   const [docType, setDocType] = useState('identity_proof');
+
+  useEffect(() => {
+    const tier = new URLSearchParams(window.location.search).get('tier');
+    if (tier === 'retailer' || tier === 'distributor' || tier === 'master_distributor')
+      setValues((current) => ({ ...current, requestedTier: tier }));
+  }, []);
 
   function update<K extends keyof FormValues>(key: K, value: FormValues[K]) {
     setValues((current) => ({ ...current, [key]: value }));
@@ -76,20 +82,8 @@ export function PartnerApplicationForm() {
         form.set('uploadToken', submitted.uploadToken);
         form.set('docType', docType);
         form.set('file', kycFile);
-        const response = await fetch(`/api/v1/files/kyc/applications/${submitted.applicationId}`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'x-csrf-token': uploadCsrf },
-          body: form,
-        });
-        if (!response.ok) {
-          const body = (await response.json().catch(() => null)) as { message?: string } | null;
-          throw new Error(
-            `Application received, but KYC upload failed: ${body?.message ?? `HTTP ${response.status}`}`,
-          );
-        }
-        resultText =
-          'Application received. Your KYC file was uploaded privately. Check your email for verification.';
+        await apiUpload(`/v1/files/kyc/applications/${submitted.applicationId}`, form, uploadCsrf);
+        resultText = messages.publicSite.apply.uploadReceived;
       }
       setResult(resultText);
       setValues(initialValues);
@@ -105,8 +99,8 @@ export function PartnerApplicationForm() {
   if (result) return <p role="status">{result}</p>;
 
   return (
-    <form className="form" onSubmit={submit}>
-      <label className="field">
+    <form className="form application-form" onSubmit={submit}>
+      <label className="field field-full">
         <span>{messages.apply.applicantName}</span>
         <input
           value={values.applicantName}
@@ -115,18 +109,18 @@ export function PartnerApplicationForm() {
           maxLength={120}
         />
       </label>
-      <label className="field">
-        <span>KYC document type</span>
+      <label className="field field-full">
+        <span>{messages.publicSite.apply.kycDocType}</span>
         <select value={docType} onChange={(event) => setDocType(event.target.value)}>
-          <option value="identity_proof">Identity proof</option>
-          <option value="pan_card">PAN card</option>
-          <option value="gst_certificate">GST certificate</option>
-          <option value="address_proof">Address proof</option>
-          <option value="bank_proof">Bank proof</option>
+          <option value="identity_proof">{messages.publicSite.apply.identityProof}</option>
+          <option value="pan_card">{messages.publicSite.apply.panCard}</option>
+          <option value="gst_certificate">{messages.publicSite.apply.gstCertificate}</option>
+          <option value="address_proof">{messages.publicSite.apply.addressProof}</option>
+          <option value="bank_proof">{messages.publicSite.apply.bankProof}</option>
         </select>
       </label>
-      <label className="field">
-        <span>Optional KYC file (PDF, JPEG, PNG; maximum 10 MiB)</span>
+      <label className="field field-full">
+        <span>{messages.publicSite.apply.optionalKyc}</span>
         <input
           type="file"
           accept="application/pdf,image/jpeg,image/png"
@@ -211,10 +205,18 @@ export function PartnerApplicationForm() {
           <option value="master_distributor">{messages.apply.masterDistributor}</option>
         </select>
       </label>
-      <button className="button button-secondary" type="button" onClick={checkAvailability}>
+      <button
+        className="button secondary availability-button"
+        type="button"
+        onClick={checkAvailability}
+      >
         {messages.apply.checkAvailability}
       </button>
-      {availability ? <p role="status">{availability}</p> : null}
+      {availability ? (
+        <p className="availability-message" role="status">
+          {availability}
+        </p>
+      ) : null}
       {error ? (
         <p className="error" role="alert">
           {error}

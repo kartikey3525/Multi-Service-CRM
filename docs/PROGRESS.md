@@ -14,9 +14,11 @@ These M2 items are intentionally paused while the frontend demo is built. Do not
 ## Frontend demo
 
 - Branch: `frontend-demo`, created from M2 commit `f1aff40`.
-- Step 1 (foundation) is implemented: shared frontend contracts, API mock adapter, realistic fixtures, brand configuration, opt-in demo toggle, light theme tokens, and shared public/admin/partner app shells.
-- Checks: `pnpm --filter @franchise-crm/web lint`, `pnpm --filter @franchise-crm/web typecheck`, and `pnpm --filter @franchise-crm/web build` passed. `pnpm exec playwright test e2e/demo-mode.spec.ts` passed 2/2 partner/admin mock sign-in flows.
-- The individual route screens are tracked in `docs/FRONTEND_PLAN.md`; implementation of public/auth (step 2) has not started yet.
+- Step 1 (foundation) is complete: shared frontend contracts, API mock adapter, realistic fixtures, brand configuration, opt-in demo toggle, light theme tokens, and shared public/admin/partner app shells.
+- Step 2 (public site and authentication) is complete: landing, services, partner paths, application and email verification, partner/admin login and recovery, and authenticator screens.
+- Checks: `pnpm lint`, `pnpm typecheck`, `pnpm build`, and `pnpm e2e` passed; the full browser suite is 10/10. The responsive browser review opened all 21 current routes at 375, 768, and 1280 px, with no page or console errors and no horizontal overflow. It exercised the application, partner sign-in, and admin authenticator flows.
+- Main 1280 px screenshots are committed in `docs/screenshots/`. The step-by-step screen checklist is in `docs/FRONTEND_PLAN.md`.
+- Step 3 (admin area) is next; the demo branch is not merged to `main`.
 
 ## M0 — Foundation (weeks 1–2)
 

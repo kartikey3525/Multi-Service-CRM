@@ -7,7 +7,7 @@ Start point: branch `frontend-demo` from `m2-partner-onboarding` at `f1aff40`.
 | Step | Scope                                                                                   | Status      |
 | ---- | --------------------------------------------------------------------------------------- | ----------- |
 | 1    | Shared types, API client, mock adapter, fixtures, theme and branding config, app shell  | Done        |
-| 2    | Public site and authentication                                                          | Not started |
+| 2    | Public site and authentication                                                          | Done        |
 | 3    | Admin area                                                                              | Not started |
 | 4    | Partner area                                                                            | Not started |
 | 5    | Polish, responsive review at 375/768/1280 px, accessibility, performance/code splitting | Not started |
@@ -20,16 +20,16 @@ Status means complete for the frontend demo, not merely present in the M2 implem
 | Screen                                                              | Status      |
 | ------------------------------------------------------------------- | ----------- |
 | Shared app shell, navigation, theme, and brand config               | Done        |
-| `/` public landing                                                  | Not started |
-| `/services` catalogue                                               | Not started |
-| `/plans` partner plans                                              | Not started |
-| `/apply` application                                                | Not started |
-| `/apply/verify` email verification                                  | Not started |
-| `/login` partner sign-in                                            | Not started |
-| `/forgot-password`, `/reset-password` partner recovery              | Not started |
-| `/2fa/verify` partner second factor                                 | Not started |
-| `/admin/login`, `/admin/forgot-password` admin sign-in and recovery | Not started |
-| `/admin/2fa/setup`, `/admin/2fa/verify` admin second factor         | Not started |
+| `/` public landing                                                  | Done        |
+| `/services` catalogue                                               | Done        |
+| `/plans` partner plans                                              | Done        |
+| `/apply` application                                                | Done        |
+| `/apply/verify` email verification                                  | Done        |
+| `/login` partner sign-in                                            | Done        |
+| `/forgot-password`, `/reset-password` partner recovery              | Done        |
+| `/2fa/verify` partner second factor                                 | Done        |
+| `/admin/login`, `/admin/forgot-password` admin sign-in and recovery | Done        |
+| `/admin/2fa/setup`, `/admin/2fa/verify` admin second factor         | Done        |
 | `/admin` dashboard                                                  | Not started |
 | `/admin/applications` review queue                                  | Not started |
 | `/admin/partners` partner management                                | Not started |
@@ -41,6 +41,8 @@ Status means complete for the frontend demo, not merely present in the M2 implem
 
 ## Review notes
 
+- Step 2 passed on the local site. All 21 existing routes were opened at 375, 768, and 1280 px; the browser check reported no page errors, console errors, or horizontal overflow. The 10-test Playwright suite passed, including partner/admin demo sign-in and public application submission.
+- Public/auth screenshots at 1280 px are in `docs/screenshots/`; see that folder's README.
 - Keep MongoDB as the primary database; Redis remains limited to sessions and queues.
 - Use deterministic local mock data only when demo mode is explicitly enabled. Normal mode continues to use the API.
 - Keep the deferred M2 tasks listed in `docs/PROGRESS.md` until the demo is accepted.

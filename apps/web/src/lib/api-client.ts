@@ -108,3 +108,21 @@ export async function apiPatch<T>(
   }
   return (await response.json()) as T;
 }
+
+export async function apiUpload<T>(
+  path: string,
+  body: FormData,
+  csrfToken = readCsrfCookie(),
+): Promise<T> {
+  const response = await apiFetch(`${apiBaseUrl}${path}`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { accept: 'application/json', ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}) },
+    body,
+  });
+  if (!response.ok) {
+    const result = (await response.json().catch(() => null)) as ApiError | null;
+    throw new Error(result?.message ?? `Request failed (${response.status})`);
+  }
+  return (await response.json()) as T;
+}

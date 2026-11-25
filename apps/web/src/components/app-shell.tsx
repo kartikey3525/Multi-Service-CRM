@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { PortalNavigation } from './portal-navigation';
 import { DemoModeToggle } from './demo-mode-toggle';
 import { brand } from '../lib/brand';
+import messages from '../messages/en.json';
 
 function Brand({ href }: { href: string }) {
   return (
@@ -12,7 +13,7 @@ function Brand({ href }: { href: string }) {
       </span>
       <span className="brand-copy">
         <strong>{brand.name}</strong>
-        <small>{brand.descriptor}</small>
+        <small>{messages.shell.descriptor}</small>
       </span>
     </Link>
   );
@@ -25,13 +26,13 @@ export function PublicShell({ children }: { children: ReactNode }) {
         <div className="site-header-inner">
           <Brand href="/" />
           <nav className="public-nav" aria-label="Main navigation">
-            <Link href="/services">Services</Link>
-            <Link href="/plans">Partner plans</Link>
-            <Link href="/apply">Become a partner</Link>
+            <Link href="/services">{messages.shell.publicServices}</Link>
+            <Link href="/plans">{messages.shell.publicPlans}</Link>
+            <Link href="/apply">{messages.shell.publicApply}</Link>
           </nav>
           <div className="header-actions">
             <Link className="header-login" href="/login">
-              Sign in
+              {messages.shell.signIn}
             </Link>
             <DemoModeToggle />
           </div>
@@ -41,8 +42,8 @@ export function PublicShell({ children }: { children: ReactNode }) {
       <footer className="site-footer">
         <div className="site-footer-inner">
           <Brand href="/" />
-          <p>Local expertise. A stronger service network.</p>
-          <a href={`mailto:${brand.supportEmail}`}>{brand.supportLabel}</a>
+          <p>{messages.shell.footerLine}</p>
+          <a href={`mailto:${brand.supportEmail}`}>{messages.shell.support}</a>
         </div>
       </footer>
     </div>
@@ -57,7 +58,7 @@ export function PortalShell({
   children: ReactNode;
 }) {
   const home = kind === 'admin' ? '/admin' : '/partner';
-  const label = kind === 'admin' ? 'Operations' : 'Partner workspace';
+  const label = kind === 'admin' ? messages.shell.operations : messages.shell.partnerWorkspace;
   return (
     <div className={`app-shell portal-shell portal-shell-${kind}`}>
       <header className="site-header portal-header">
@@ -69,7 +70,7 @@ export function PortalShell({
           </div>
           <div className="header-actions">
             <Link className="header-login" href="/">
-              Public site
+              {messages.shell.publicSite}
             </Link>
             <DemoModeToggle />
           </div>
@@ -88,7 +89,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
           <Brand href="/" />
           <div className="header-actions">
             <Link className="header-login" href="/">
-              Back to home
+              {messages.shell.backHome}
             </Link>
             <DemoModeToggle />
           </div>

@@ -14,6 +14,7 @@ export function TwoFactorForm({ kind, setup }: { kind: 'admin' | 'partner'; setu
   const [code, setCode] = useState('');
   const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null);
   const [error, setError] = useState('');
+  const [copyMessage, setCopyMessage] = useState('');
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -37,6 +38,16 @@ export function TwoFactorForm({ kind, setup }: { kind: 'admin' | 'partner'; setu
       setError(cause instanceof Error ? cause.message : messages.auth.error);
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function copySetupKey() {
+    if (!data) return;
+    try {
+      await navigator.clipboard.writeText(data.secret);
+      setCopyMessage(messages.auth.copiedSetupKey);
+    } catch {
+      setCopyMessage(messages.auth.copySetupKeyError);
     }
   }
 
@@ -64,10 +75,22 @@ export function TwoFactorForm({ kind, setup }: { kind: 'admin' | 'partner'; setu
       <h1>{setup ? messages.auth.enrollHeading : messages.auth.verifyCode}</h1>
       {setup ? <p>{messages.auth.enrollInstructions}</p> : null}
       {data ? (
-        <>
-          <p className="muted">{data.secret}</p>
-          <p className="muted">{data.otpauthUrl}</p>
-        </>
+        <div className="setup-key-panel">
+          <span>{messages.auth.manualKeyLabel}</span>
+          <code>{data.secret}</code>
+          <button className="button secondary small" type="button" onClick={copySetupKey}>
+            {messages.auth.copySetupKey}
+          </button>
+          {copyMessage ? (
+            <p className="setup-copy-message" role="status">
+              {copyMessage}
+            </p>
+          ) : null}
+          <details>
+            <summary>{messages.auth.showSetupUri}</summary>
+            <code className="setup-uri">{data.otpauthUrl}</code>
+          </details>
+        </div>
       ) : null}
       {setup && !data && !error ? <p>{messages.auth.loading}</p> : null}
       <form className="form" onSubmit={submit}>
