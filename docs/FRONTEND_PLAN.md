@@ -13,8 +13,8 @@ Start point: branch `frontend-demo` from `m2-partner-onboarding` at `f1aff40`.
 | 2    | Public site and authentication                                                          | Done                                                 |
 | 3    | Admin area                                                                              | Built; owner run output not supplied                 |
 | 4    | Partner area                                                                            | Built; mock acceptance passes; browser check pending |
-| 5    | Polish, responsive review at 375/768/1280 px, accessibility, performance/code splitting | Code complete; route/accessibility sweep pending     |
-| 6    | Documentation and demo script                                                           | Updated; presenter/browser review pending            |
+| 5    | Polish, responsive review at 375/768/1280 px, accessibility, performance/code splitting | Implemented, browser-unverified                      |
+| 6    | Documentation and demo script                                                           | Implemented, browser-unverified                      |
 
 ## Screen checklist
 
