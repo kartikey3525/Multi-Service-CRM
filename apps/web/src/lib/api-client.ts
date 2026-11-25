@@ -1,14 +1,18 @@
-export type ApiError = {
-  code: string;
-  message: string;
-  requestId?: string;
-};
+import type { ApiErrorPayload } from './contracts';
+import { getMockCsrfToken, mockApiFetch } from './mock-adapter';
+import { isDemoMode } from './demo-mode';
+
+export type ApiError = ApiErrorPayload;
 
 const apiBaseUrl =
   typeof window === 'undefined' ? (process.env.API_INTERNAL_URL ?? '/api') : '/api';
 
+function apiFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
+  return isDemoMode() ? mockApiFetch(input, init) : fetch(input, init);
+}
+
 export async function apiGet<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}${path}`, {
+  const response = await apiFetch(`${apiBaseUrl}${path}`, {
     ...init,
     headers: { accept: 'application/json', ...init.headers },
     credentials: 'include',
@@ -21,16 +25,16 @@ export async function apiGet<T>(path: string, init: RequestInit = {}): Promise<T
 }
 
 export function readCsrfCookie(): string {
-  if (typeof document === 'undefined') return '';
+  if (typeof document === 'undefined') return isDemoMode() ? getMockCsrfToken() : '';
   const token = document.cookie
     .split('; ')
     .find((entry) => entry.startsWith('csrf_token='))
     ?.slice('csrf_token='.length);
-  return token ? decodeURIComponent(token) : '';
+  return token ? decodeURIComponent(token) : isDemoMode() ? getMockCsrfToken() : '';
 }
 
 export async function requestCsrfToken(): Promise<string> {
-  const response = await fetch(`${apiBaseUrl}/v1/auth/csrf`, {
+  const response = await apiFetch(`${apiBaseUrl}/v1/auth/csrf`, {
     credentials: 'include',
     headers: { accept: 'application/json' },
   });
@@ -44,7 +48,7 @@ export async function apiPost<T>(
   body?: unknown,
   csrfToken = readCsrfCookie(),
 ): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}${path}`, {
+  const response = await apiFetch(`${apiBaseUrl}${path}`, {
     method: 'POST',
     credentials: 'include',
     headers: {
@@ -66,7 +70,7 @@ export async function apiPut<T>(
   body: unknown,
   csrfToken = readCsrfCookie(),
 ): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}${path}`, {
+  const response = await apiFetch(`${apiBaseUrl}${path}`, {
     method: 'PUT',
     credentials: 'include',
     headers: {
@@ -88,7 +92,7 @@ export async function apiPatch<T>(
   body: unknown,
   csrfToken = readCsrfCookie(),
 ): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}${path}`, {
+  const response = await apiFetch(`${apiBaseUrl}${path}`, {
     method: 'PATCH',
     credentials: 'include',
     headers: {

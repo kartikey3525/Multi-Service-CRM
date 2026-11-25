@@ -2,6 +2,22 @@
 
 Work in task order. M1 was accepted by the owner on local evidence; live staging checks are deferred until release preparation.
 
+## Deferred M2 (until the frontend demo is accepted)
+
+- [ ] Invite-driven lower-tier applications with enforced seat quotas.
+- [ ] KYC expiry reminders through the worker.
+- [ ] Partner 2FA reset controls.
+- [ ] Browser acceptance flow from email verification through reviewer approval, invite/password setup, and pending-payment login.
+
+These M2 items are intentionally paused while the frontend demo is built. Do not begin later backend milestones during this demo work.
+
+## Frontend demo
+
+- Branch: `frontend-demo`, created from M2 commit `f1aff40`.
+- Step 1 (foundation) is implemented: shared frontend contracts, API mock adapter, realistic fixtures, brand configuration, opt-in demo toggle, light theme tokens, and shared public/admin/partner app shells.
+- Checks: `pnpm --filter @franchise-crm/web lint`, `pnpm --filter @franchise-crm/web typecheck`, and `pnpm --filter @franchise-crm/web build` passed. `pnpm exec playwright test e2e/demo-mode.spec.ts` passed 2/2 partner/admin mock sign-in flows.
+- The individual route screens are tracked in `docs/FRONTEND_PLAN.md`; implementation of public/auth (step 2) has not started yet.
+
 ## M0 — Foundation (weeks 1–2)
 
 - [x] M0-01 Repository layout, workspace/tooling baseline, `AGENTS.md`, and repository specifications.

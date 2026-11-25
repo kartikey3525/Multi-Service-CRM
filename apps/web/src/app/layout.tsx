@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { brand } from '../lib/brand';
 
 export const metadata: Metadata = {
-  title: 'Franchise Services Portal',
-  description: 'A service network for business support and partner operations.',
+  title: `${brand.name} | ${brand.descriptor}`,
+  description: 'A service network for local business support and partner operations.',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
