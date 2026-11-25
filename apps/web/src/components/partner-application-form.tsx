@@ -35,6 +35,8 @@ export function PartnerApplicationForm() {
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [kycFile, setKycFile] = useState<File>();
+  const [docType, setDocType] = useState('identity_proof');
 
   function update<K extends keyof FormValues>(key: K, value: FormValues[K]) {
     setValues((current) => ({ ...current, [key]: value }));
@@ -62,9 +64,36 @@ export function PartnerApplicationForm() {
     setResult('');
     try {
       const csrf = await requestCsrfToken();
-      await apiPost('/v1/public/applications', values, csrf);
-      setResult(messages.apply.submitted);
+      const submitted = await apiPost<{ applicationId: string; uploadToken: string }>(
+        '/v1/public/applications',
+        values,
+        csrf,
+      );
+      let resultText = messages.apply.submitted;
+      if (kycFile) {
+        const uploadCsrf = await requestCsrfToken();
+        const form = new FormData();
+        form.set('uploadToken', submitted.uploadToken);
+        form.set('docType', docType);
+        form.set('file', kycFile);
+        const response = await fetch(`/api/v1/files/kyc/applications/${submitted.applicationId}`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'x-csrf-token': uploadCsrf },
+          body: form,
+        });
+        if (!response.ok) {
+          const body = (await response.json().catch(() => null)) as { message?: string } | null;
+          throw new Error(
+            `Application received, but KYC upload failed: ${body?.message ?? `HTTP ${response.status}`}`,
+          );
+        }
+        resultText =
+          'Application received. Your KYC file was uploaded privately. Check your email for verification.';
+      }
+      setResult(resultText);
       setValues(initialValues);
+      setKycFile(undefined);
       setAvailability('');
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : messages.apply.error);
@@ -84,6 +113,24 @@ export function PartnerApplicationForm() {
           onChange={(event) => update('applicantName', event.target.value)}
           required
           maxLength={120}
+        />
+      </label>
+      <label className="field">
+        <span>KYC document type</span>
+        <select value={docType} onChange={(event) => setDocType(event.target.value)}>
+          <option value="identity_proof">Identity proof</option>
+          <option value="pan_card">PAN card</option>
+          <option value="gst_certificate">GST certificate</option>
+          <option value="address_proof">Address proof</option>
+          <option value="bank_proof">Bank proof</option>
+        </select>
+      </label>
+      <label className="field">
+        <span>Optional KYC file (PDF, JPEG, PNG; maximum 10 MiB)</span>
+        <input
+          type="file"
+          accept="application/pdf,image/jpeg,image/png"
+          onChange={(event) => setKycFile(event.target.files?.[0])}
         />
       </label>
       <label className="field">

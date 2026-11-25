@@ -7,6 +7,8 @@ export interface Actor {
   permissions: Set<string>;
   /** Partner IDs in this actor's own subtree, resolved from the Mongo materialized path. */
   partnerPath?: string[];
+  partnerId?: string;
+  partnerStatus?: 'pending_payment' | 'active' | 'suspended' | 'closed';
 }
 
 export type MongoScope = Record<string, unknown>;

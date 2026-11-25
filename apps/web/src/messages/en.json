@@ -119,6 +119,7 @@
     "none": "No applications found.",
     "documents": "KYC documents",
     "noDocuments": "No documents uploaded yet.",
+    "viewDocument": "View document",
     "phone": "Mobile",
     "legalType": "Legal structure",
     "parentPartnerId": "Required higher-tier parent partner",

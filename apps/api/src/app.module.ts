@@ -4,9 +4,10 @@ import { StructuredLoggerMiddleware } from './common/structured-logger.middlewar
 import { DatabaseLifecycle } from './database';
 import { IdentityModule } from './modules/identity/identity.module';
 import { PartnersModule } from './modules/partners/partners.module';
+import { FilesModule } from './modules/files/files.module';
 
 @Module({
-  imports: [IdentityModule, PartnersModule],
+  imports: [IdentityModule, PartnersModule, FilesModule],
   controllers: [HealthController],
   providers: [StructuredLoggerMiddleware, DatabaseLifecycle],
 })

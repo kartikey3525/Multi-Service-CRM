@@ -29,6 +29,8 @@ export interface ApplicationRecord {
   territoryId?: Types.ObjectId;
   emailVerificationTokenHash: string;
   emailVerificationExpiresAt: Date;
+  uploadTokenHash?: string;
+  uploadTokenExpiresAt?: Date;
   emailVerifiedAt?: Date;
   status: ApplicationStatus;
   reviewerId?: Types.ObjectId;
@@ -55,10 +57,10 @@ export interface PartnerRecord {
   pin: string;
   territoryId?: Types.ObjectId;
   panEnc?: string;
-  gstin?: string;
-  address?: string;
+  gstinEnc?: string;
+  addressEnc?: string;
   bankAccountEnc?: string;
-  bankIfsc?: string;
+  bankIfscEnc?: string;
   activatedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -123,6 +125,8 @@ const applicationSchema = new Schema<ApplicationRecord>(
     territoryId: Schema.Types.ObjectId,
     emailVerificationTokenHash: { type: String, required: true, select: false },
     emailVerificationExpiresAt: { type: Date, required: true, select: false },
+    uploadTokenHash: { type: String, select: false },
+    uploadTokenExpiresAt: { type: Date, select: false },
     emailVerifiedAt: Date,
     status: {
       type: String,
@@ -164,10 +168,10 @@ const partnerSchema = new Schema<PartnerRecord>(
     pin: { type: String, required: true, trim: true },
     territoryId: Schema.Types.ObjectId,
     panEnc: String,
-    gstin: String,
-    address: String,
+    gstinEnc: String,
+    addressEnc: String,
     bankAccountEnc: String,
-    bankIfsc: String,
+    bankIfscEnc: String,
     activatedAt: Date,
   },
   { timestamps: true, collection: 'partners' },

@@ -22,6 +22,11 @@ Record implementation decisions and dependencies with date and reason.
 - **Decision:** Use the official RustFS 1.0.5 container for local S3-compatible storage instead of MinIO.
 - **Reason:** The documented `minio/minio` Docker Hub image is no longer pullable, and the upstream project is archived. RustFS publishes a pullable container with S3 API and health endpoints. The application continues to use the roadmap's S3-compatible storage interface through environment variables.
 
+## 2026-11-25 — private KYC object storage client
+
+- **Decision:** Use AWS SDK for JavaScript v3 S3 client for KYC object storage operations.
+- **Reason:** It supports the local RustFS S3-compatible endpoint and hosted S3-compatible storage using standard commands, without generating public or presigned download URLs. Document retrieval remains authenticated and streamed through the API.
+
 ## 2026-11-24 — M0 test tooling
 
 - **Decision:** Use Node's built-in test/assert APIs through `tsx` for TypeScript tests, Supertest for API HTTP integration checks, and Playwright Test for browser smoke checks. API integration tests create and drop a uniquely named database only when `MONGODB_TEST_URI` explicitly identifies a test database.

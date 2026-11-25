@@ -6,10 +6,11 @@ import mongoose from 'mongoose';
 import { NestFactory } from '@nestjs/core';
 import { authenticator } from 'otplib';
 import request from 'supertest';
+import type { NextFunction, Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import { HttpExceptionFilter } from '../src/common/http-exception.filter';
 import { scopeToActor } from '../src/common/actor';
 import { requestIdMiddleware } from '../src/common/request-id.middleware';
-import { hashPassword } from '../src/modules/identity/security';
+import { decryptField, hashPassword } from '../src/modules/identity/security';
 import { makePartnerFixture } from './factories/partner.factory';
 
 const testUri = process.env.MONGODB_TEST_URI;
@@ -32,8 +33,8 @@ test(
     process.env.MONGODB_IMMUTABLE_DATABASE = immutableDatabaseName;
     const [
       { AppModule },
-      { AuditModel, EmailOutboxModel, RoleModel, UserModel },
-      { ApplicationModel, PartnerModel, PartnerUserModel, TerritoryModel },
+      { AuditModel, EmailOutboxModel, PasswordResetModel, RoleModel, UserModel },
+      { ApplicationModel, KycDocumentModel, PartnerModel, PartnerUserModel, TerritoryModel },
     ] = await Promise.all([
       import('../src/app.module'),
       import('../src/modules/identity/models'),
@@ -50,6 +51,11 @@ test(
     try {
       await mongoose.connect(parsedUri.toString());
       app = await NestFactory.create(AppModule, { logger: false });
+      const integrationIp = `198.51.100.${Math.floor(Math.random() * 254) + 1}`;
+      app.use((request: ExpressRequest, _response: ExpressResponse, next: NextFunction) => {
+        Object.defineProperty(request, 'ip', { value: integrationIp, configurable: true });
+        next();
+      });
       app.use(requestIdMiddleware);
       app.setGlobalPrefix('api');
       app.useGlobalFilters(new HttpExceptionFilter());
@@ -93,6 +99,22 @@ test(
         })
         .expect(201);
       assert.equal(submittedApplication.body.verificationRequired, true);
+      const applicantPdf = Buffer.from('%PDF-1.7\napplicant private kyc\n%%EOF');
+      const applicationUploadCsrf = await request(app.getHttpServer())
+        .get('/api/v1/auth/csrf')
+        .expect(200);
+      const uploadedApplicationKyc = await request(app.getHttpServer())
+        .post(`/api/v1/files/kyc/applications/${submittedApplication.body.applicationId as string}`)
+        .set('Cookie', cookiePair(applicationUploadCsrf.headers['set-cookie'], 'csrf_token'))
+        .set('X-CSRF-Token', applicationUploadCsrf.body.csrfToken as string)
+        .field('uploadToken', submittedApplication.body.uploadToken as string)
+        .field('docType', 'identity_proof')
+        .attach('file', applicantPdf, {
+          filename: 'applicant.pdf',
+          contentType: 'application/pdf',
+        });
+      assert.equal(uploadedApplicationKyc.status, 201, JSON.stringify(uploadedApplicationKyc.body));
+      assert.equal(uploadedApplicationKyc.body.ownerType, 'application');
       const verificationEmail = await EmailOutboxModel.findOne({
         to: applicationEmail,
         template: 'application_verify',
@@ -206,7 +228,81 @@ test(
       assert.equal(createdPartner.tier, 'master_distributor');
       assert.deepEqual(createdPartner.path.map(String), [String(createdPartner._id)]);
       assert.ok(await PartnerUserModel.exists({ partnerId: createdPartner._id, role: 'owner' }));
-
+      const inviteEmail = await EmailOutboxModel.findOne({
+        to: applicationEmail,
+        template: 'password_reset',
+      }).lean();
+      assert.ok(inviteEmail);
+      const inviteVariables =
+        inviteEmail.variables instanceof Map
+          ? Object.fromEntries(inviteEmail.variables)
+          : inviteEmail.variables;
+      const inviteToken = new URL(inviteVariables.resetUrl).searchParams.get('token');
+      assert.ok(inviteToken);
+      assert.ok(
+        await PasswordResetModel.exists({
+          userId: createdPartner.ownerUserId,
+          usedAt: { $exists: false },
+        }),
+      );
+      const partnerResetCsrf = await request(app.getHttpServer())
+        .get('/api/v1/auth/csrf')
+        .expect(200);
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/password/reset')
+        .set('Cookie', cookiePair(partnerResetCsrf.headers['set-cookie'], 'csrf_token'))
+        .set('X-CSRF-Token', partnerResetCsrf.body.csrfToken as string)
+        .send({ token: inviteToken, password: 'M2-integration-invited-partner-password' })
+        .expect(201, { status: 'password_updated' });
+      const invitedPartnerCsrf = await request(app.getHttpServer())
+        .get('/api/v1/auth/csrf')
+        .expect(200);
+      const invitedPartnerLogin = await request(app.getHttpServer())
+        .post('/api/v1/auth/login')
+        .set('Cookie', cookiePair(invitedPartnerCsrf.headers['set-cookie'], 'csrf_token'))
+        .set('X-CSRF-Token', invitedPartnerCsrf.body.csrfToken as string)
+        .send({ email: applicationEmail, password: 'M2-integration-invited-partner-password' })
+        .expect(201);
+      const invitedPartnerCookies = combineCookies(invitedPartnerLogin.headers['set-cookie'], [
+        'partner_session',
+        'csrf_token',
+      ]);
+      const invitedPartnerProfile = await request(app.getHttpServer())
+        .get('/api/v1/auth/me')
+        .set('Cookie', invitedPartnerCookies)
+        .expect(200);
+      assert.equal(invitedPartnerProfile.body.user.partner.status, 'pending_payment');
+      const encryptionKey = process.env.FIELD_ENCRYPTION_KEY ?? 'integration-test-field-key';
+      const sensitiveFields = {
+        pan: 'ABCDE1234F',
+        gstin: '07ABCDE1234F1Z5',
+        address: '42 Example Road, New Delhi',
+        bankAccount: '123456789012',
+        bankIfsc: 'HDFC0001234',
+      };
+      const encryptedResponse = await request(app.getHttpServer())
+        .patch(`/api/v1/admin/partners/${String(createdPartner._id)}/kyc-fields`)
+        .set('Cookie', adminCookies)
+        .set('X-CSRF-Token', adminCsrf)
+        .send(sensitiveFields)
+        .expect(200);
+      assert.equal(encryptedResponse.body.masked.pan.endsWith('234F'), true);
+      const encryptedPartner = await PartnerModel.findById(createdPartner._id).lean();
+      assert.ok(encryptedPartner?.panEnc && !encryptedPartner.panEnc.includes(sensitiveFields.pan));
+      assert.equal(decryptField(encryptedPartner.panEnc, encryptionKey), sensitiveFields.pan);
+      assert.equal(decryptField(encryptedPartner.gstinEnc!, encryptionKey), sensitiveFields.gstin);
+      assert.equal(
+        decryptField(encryptedPartner.addressEnc!, encryptionKey),
+        sensitiveFields.address,
+      );
+      assert.equal(
+        decryptField(encryptedPartner.bankAccountEnc!, encryptionKey),
+        sensitiveFields.bankAccount,
+      );
+      assert.equal(
+        decryptField(encryptedPartner.bankIfscEnc!, encryptionKey),
+        sensitiveFields.bankIfsc,
+      );
       await PartnerModel.updateOne({ _id: createdPartner._id }, { $set: { status: 'active' } });
       const childEmail = `child-${randomUUID()}@example.test`;
       const childApplication = await ApplicationModel.create({
@@ -244,6 +340,28 @@ test(
         String(createdPartner._id),
         String(childPartner._id),
       ]);
+      const partnerNetwork = await request(app.getHttpServer())
+        .get('/api/v1/partner/network')
+        .set('Cookie', invitedPartnerCookies)
+        .expect(200);
+      assert.equal(partnerNetwork.body.total, 1);
+      assert.equal(partnerNetwork.body.items[0].id, String(childPartner._id));
+      await request(app.getHttpServer())
+        .put(`/api/v1/admin/partners/${String(createdPartner._id)}/status`)
+        .set('Cookie', adminCookies)
+        .set('X-CSRF-Token', adminCsrf)
+        .send({ status: 'suspended' })
+        .expect(200);
+      await request(app.getHttpServer())
+        .get('/api/v1/auth/me')
+        .set('Cookie', invitedPartnerCookies)
+        .expect(401);
+      await request(app.getHttpServer())
+        .put(`/api/v1/admin/partners/${String(createdPartner._id)}/status`)
+        .set('Cookie', adminCookies)
+        .set('X-CSRF-Token', adminCsrf)
+        .send({ status: 'active' })
+        .expect(200);
 
       await request(app.getHttpServer())
         .post('/api/v1/auth/logout')
@@ -345,6 +463,93 @@ test(
         new Set(scopedPartners.map((row) => String(row._id))),
         new Set([String(partnerRecordId), String(downlineRecordId)]),
       );
+      const pdf = Buffer.from('%PDF-1.7\nprivate kyc fixture\n%%EOF');
+      const uploadedKyc = await request(app.getHttpServer())
+        .post('/api/v1/files/kyc')
+        .set('Cookie', partnerCookies)
+        .set('X-CSRF-Token', partnerLogin.body.csrfToken as string)
+        .field('ownerType', 'partner')
+        .field('ownerId', String(partnerRecordId))
+        .field('docType', 'pan_card')
+        .attach('file', pdf, { filename: 'fixture.pdf', contentType: 'application/pdf' })
+        .expect(201);
+      assert.equal(uploadedKyc.body.contentType, 'application/pdf');
+      assert.equal(uploadedKyc.body.sizeBytes, pdf.byteLength);
+      await request(app.getHttpServer())
+        .post('/api/v1/files/kyc')
+        .set('Cookie', partnerCookies)
+        .set('X-CSRF-Token', partnerLogin.body.csrfToken as string)
+        .field('ownerType', 'partner')
+        .field('ownerId', String(partnerRecordId))
+        .field('docType', 'pan_card')
+        .attach('file', Buffer.from('not a PDF'), {
+          filename: 'spoof.pdf',
+          contentType: 'application/pdf',
+        })
+        .expect(400);
+      await request(app.getHttpServer())
+        .post('/api/v1/files/kyc')
+        .set('Cookie', partnerCookies)
+        .set('X-CSRF-Token', partnerLogin.body.csrfToken as string)
+        .field('ownerType', 'partner')
+        .field('ownerId', String(partnerRecordId))
+        .field('docType', 'pan_card')
+        .attach('file', Buffer.alloc(10 * 1024 * 1024 + 1, 65), {
+          filename: 'oversize.pdf',
+          contentType: 'application/pdf',
+        })
+        .expect(413);
+      const viewedKyc = await request(app.getHttpServer())
+        .get(`/api/v1/files/kyc/${uploadedKyc.body.id as string}`)
+        .set('Cookie', partnerCookies)
+        .buffer(true)
+        .parse((response, callback) => {
+          const chunks: Buffer[] = [];
+          response.on('data', (chunk: Buffer) => chunks.push(chunk));
+          response.on('end', () => callback(null, Buffer.concat(chunks)));
+        })
+        .expect(200);
+      assert.deepEqual(viewedKyc.body, pdf);
+      assert.equal(
+        await AuditModel.countDocuments({
+          action: 'kyc.document_viewed',
+          entityId: uploadedKyc.body.id,
+        }),
+        1,
+      );
+      await PartnerModel.updateOne({ _id: partnerRecordId }, { $set: { status: 'suspended' } });
+      await request(app.getHttpServer())
+        .post('/api/v1/files/kyc')
+        .set('Cookie', partnerCookies)
+        .set('X-CSRF-Token', partnerLogin.body.csrfToken as string)
+        .field('ownerType', 'partner')
+        .field('ownerId', String(partnerRecordId))
+        .field('docType', 'pan_card')
+        .attach('file', pdf, { filename: 'suspended.pdf', contentType: 'application/pdf' })
+        .expect(403);
+      await PartnerModel.updateOne({ _id: partnerRecordId }, { $set: { status: 'active' } });
+      const outsideDocument = await KycDocumentModel.create({
+        ownerType: 'partner',
+        ownerId: new mongoose.Types.ObjectId(),
+        docType: 'pan_card',
+        fileKey: 'kyc/private/outside-network.pdf',
+        contentType: 'application/pdf',
+        sizeBytes: pdf.byteLength,
+        status: 'pending',
+      });
+      await request(app.getHttpServer())
+        .get(`/api/v1/files/kyc/${String(outsideDocument._id)}`)
+        .set('Cookie', partnerCookies)
+        .expect(403);
+      await request(app.getHttpServer())
+        .post('/api/v1/files/kyc')
+        .set('Cookie', partnerCookies)
+        .set('X-CSRF-Token', partnerLogin.body.csrfToken as string)
+        .field('ownerType', 'partner')
+        .field('ownerId', String(createdPartner._id))
+        .field('docType', 'pan_card')
+        .attach('file', pdf, { filename: 'other.pdf', contentType: 'application/pdf' })
+        .expect(403);
       await request(app.getHttpServer())
         .get('/api/v1/admin/users')
         .set('Cookie', partnerCookies)

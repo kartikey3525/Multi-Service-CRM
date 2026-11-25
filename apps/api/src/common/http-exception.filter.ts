@@ -17,15 +17,25 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const request = context.getRequest<Request>();
     const response = context.getResponse<Response>();
     const requestId = response.locals.requestId as string | undefined;
+    const multerCode =
+      typeof exception === 'object' && exception !== null && 'code' in exception
+        ? (exception as { code?: unknown }).code
+        : undefined;
     const status =
-      exception instanceof HttpException ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
+      exception instanceof HttpException
+        ? exception.getStatus()
+        : multerCode === 'LIMIT_FILE_SIZE'
+          ? HttpStatus.PAYLOAD_TOO_LARGE
+          : HttpStatus.INTERNAL_SERVER_ERROR;
     const code = status >= 500 ? 'INTERNAL_ERROR' : `HTTP_${status}`;
     const message =
       status >= 500
         ? 'An unexpected error occurred.'
-        : exception instanceof HttpException
-          ? this.publicMessage(exception)
-          : 'Request failed.';
+        : multerCode === 'LIMIT_FILE_SIZE'
+          ? 'KYC files must be at most 10 MiB.'
+          : exception instanceof HttpException
+            ? this.publicMessage(exception)
+            : 'Request failed.';
 
     if (status >= 500) {
       this.logger.error(JSON.stringify({ level: 'error', code, requestId, path: request.path }));

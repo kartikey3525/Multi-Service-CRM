@@ -16,6 +16,7 @@ import {
 } from './security';
 import { provisionIdentity } from './provisioning';
 import { RateLimitService } from './rate-limit.service';
+import { PartnerModel, PartnerUserModel } from '../partners/models';
 
 const config = loadConfig();
 const invalidCredentials = 'Invalid email or password.';
@@ -199,12 +200,34 @@ export class AuthService {
     const roles = await RoleModel.find({ _id: { $in: user.roleIds } })
       .select('key name permissions')
       .lean();
+    const membership =
+      user.kind === 'partner'
+        ? await PartnerUserModel.findOne({ userId: user._id, status: 'active' })
+            .select('partnerId')
+            .lean()
+        : null;
+    const partner = membership
+      ? await PartnerModel.findById(membership.partnerId)
+          .select('code tier status businessName')
+          .lean()
+      : null;
     return {
       user: {
         ...user,
         roleKeys: roles.map((role) => role.key),
         roleNames: roles.map((role) => role.name),
         permissions: [...new Set(roles.flatMap((role) => role.permissions))],
+        ...(partner && membership
+          ? {
+              partner: {
+                id: String(membership.partnerId),
+                code: partner.code,
+                tier: partner.tier,
+                status: partner.status,
+                businessName: partner.businessName,
+              },
+            }
+          : {}),
       },
     };
   }

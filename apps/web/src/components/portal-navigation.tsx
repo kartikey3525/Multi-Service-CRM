@@ -11,10 +11,15 @@ const links = {
   admin: [
     { href: '/admin', label: 'Home', permission: 'identity.me' },
     { href: '/admin/applications', label: 'Applications', permission: 'applications.read' },
+    { href: '/admin/partners', label: 'Partners', permission: 'partners.read' },
     { href: '/admin/users', label: 'Users', permission: 'admin_users.read' },
     { href: '/admin/audit', label: 'Audit log', permission: 'audit.read' },
   ],
-  partner: [{ href: '/partner', label: 'Home', permission: 'identity.me' }],
+  partner: [
+    { href: '/partner', label: 'Home', permission: 'identity.me' },
+    { href: '/partner/profile', label: 'Profile and KYC', permission: 'identity.me' },
+    { href: '/partner/network', label: 'Partner network', permission: 'team.read' },
+  ],
 } satisfies Record<PortalKind, { href: string; label: string; permission: string }[]>;
 
 export function PortalNavigation({ kind }: { kind: PortalKind }) {

@@ -204,7 +204,10 @@ export function AdminApplications() {
               {selected.documents.map((doc) => (
                 <li key={doc._id}>
                   {doc.docType} · {doc.contentType} · {Math.ceil(doc.sizeBytes / 1024)} KB ·{' '}
-                  {doc.status}
+                  {doc.status} ·{' '}
+                  <a href={`/api/v1/files/kyc/${doc._id}`} target="_blank" rel="noreferrer">
+                    {messages.applications.viewDocument}
+                  </a>
                 </li>
               ))}
             </ul>

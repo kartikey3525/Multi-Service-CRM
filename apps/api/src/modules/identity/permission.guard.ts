@@ -82,17 +82,25 @@ export class PermissionGuard implements CanActivate {
         .lean();
       const partner = membership
         ? await PartnerModel.findOne({ _id: membership.partnerId, status: { $ne: 'closed' } })
-            .select('_id path')
+            .select('_id path status')
             .lean()
         : null;
       if (!partner || !partner.path.length)
         throw new ForbiddenException('An active partner membership is required.');
+      actor.partnerId = String(partner._id);
+      actor.partnerStatus = partner.status;
       actor.partnerPath = (
         await PartnerModel.distinct('_id', {
           path: partner._id,
           status: { $ne: 'closed' },
         })
       ).map(String);
+      const isWrite = !['GET', 'HEAD', 'OPTIONS'].includes(request.method.toUpperCase());
+      const allowsPendingKyc =
+        metadata.permission === 'files.upload' && partner.status === 'pending_payment';
+      const allowsLogout = metadata.permission === 'identity.logout';
+      if (isWrite && partner.status !== 'active' && !allowsPendingKyc && !allowsLogout)
+        throw new ForbiddenException('Only active partners may perform this action.');
     }
     request.actor = actor;
     request.authSession = session;

@@ -89,12 +89,14 @@ export class ApplicationsService {
       throw new BadRequestException('Partner applications are not open for this PIN code.');
 
     const token = randomBytes(32).toString('base64url');
+    const uploadToken = randomBytes(32).toString('base64url');
     const tokenHash = createHash('sha256').update(token).digest('hex');
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
     const baseUrl = process.env.APP_BASE_URL ?? 'http://localhost';
     const verificationUrl = new URL('/apply/verify', baseUrl);
     verificationUrl.searchParams.set('token', token);
     const session = await mongoose.startSession();
+    let applicationId = '';
     try {
       await session.withTransaction(async () => {
         const [application] = await ApplicationModel.create(
@@ -106,12 +108,15 @@ export class ApplicationsService {
               territoryId: availability.territory?.id,
               emailVerificationTokenHash: tokenHash,
               emailVerificationExpiresAt: expiresAt,
+              uploadTokenHash: digestToken(uploadToken),
+              uploadTokenExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
               status: 'pending_email_verification',
             },
           ],
           { session },
         );
         if (!application) throw new Error('Application insert returned no document.');
+        applicationId = String(application._id);
         await EmailOutboxModel.create(
           [
             {
@@ -143,7 +148,7 @@ export class ApplicationsService {
     } finally {
       await session.endSession();
     }
-    return { accepted: true, verificationRequired: true };
+    return { accepted: true, verificationRequired: true, applicationId, uploadToken };
   }
 
   async verifyEmail(token: string) {

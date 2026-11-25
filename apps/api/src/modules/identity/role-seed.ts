@@ -30,6 +30,9 @@ const roleDefinitions: SeedRole[] = [
       Permission.applicationsRead,
       Permission.applicationsReview,
       Permission.partnersRead,
+      Permission.partnersManage,
+      Permission.filesUpload,
+      Permission.filesDownload,
     ],
   },
   {
@@ -104,9 +107,9 @@ const roleDefinitions: SeedRole[] = [
       Permission.ordersCreate,
       Permission.customersRead,
       Permission.customersManage,
+      Permission.teamRead,
       Permission.leadsRead,
       Permission.leadsManage,
-      Permission.teamRead,
       Permission.teamManage,
       Permission.reportsRead,
       Permission.filesUpload,
@@ -125,9 +128,9 @@ const roleDefinitions: SeedRole[] = [
       Permission.ordersCreate,
       Permission.customersRead,
       Permission.customersManage,
+      Permission.teamRead,
       Permission.leadsRead,
       Permission.leadsManage,
-      Permission.teamRead,
       Permission.teamManage,
       Permission.filesUpload,
       Permission.filesDownload,
@@ -145,6 +148,7 @@ const roleDefinitions: SeedRole[] = [
       Permission.ordersCreate,
       Permission.customersRead,
       Permission.customersManage,
+      Permission.teamRead,
       Permission.leadsRead,
       Permission.leadsManage,
       Permission.filesUpload,
@@ -171,6 +175,10 @@ export async function seedRoles(): Promise<void> {
         { key: role.key },
         { $setOnInsert: { ...role, system: true } },
         { upsert: true },
+      );
+      await RoleModel.updateOne(
+        { key: role.key, kind: role.kind, system: true },
+        { $addToSet: { permissions: { $each: role.permissions } } },
       );
     } catch (error) {
       if ((error as { code?: number }).code !== 11000) throw error;
