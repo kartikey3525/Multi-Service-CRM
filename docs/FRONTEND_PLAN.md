@@ -7,65 +7,69 @@ Start point: branch `frontend-demo` from `m2-partner-onboarding` at `f1aff40`.
 
 ## Build steps
 
-| Step | Scope                                                                                   | Status                                    |
-| ---- | --------------------------------------------------------------------------------------- | ----------------------------------------- |
-| 1    | Shared types, API client, mock adapter, fixtures, theme and branding config, app shell  | Done                                      |
-| 2    | Public site and authentication                                                          | Done                                      |
-| 3    | Admin area                                                                              | Built; browser recheck blocked            |
-| 4    | Partner area                                                                            | In progress; browser verification blocked |
-| 5    | Polish, responsive review at 375/768/1280 px, accessibility, performance/code splitting | In progress; visual QA blocked            |
-| 6    | Documentation and demo script                                                           | Done                                      |
+| Step | Scope                                                                                   | Status                                               |
+| ---- | --------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| 1    | Shared types, API client, mock adapter, fixtures, theme and branding config, app shell  | Done                                                 |
+| 2    | Public site and authentication                                                          | Done                                                 |
+| 3    | Admin area                                                                              | Built; owner run output not supplied                 |
+| 4    | Partner area                                                                            | Built; mock acceptance passes; browser check pending |
+| 5    | Polish, responsive review at 375/768/1280 px, accessibility, performance/code splitting | Code complete; route/accessibility sweep pending     |
+| 6    | Documentation and demo script                                                           | Updated; presenter/browser review pending            |
 
 ## Screen checklist
 
 Status means complete for the frontend demo, not merely present in the M2 implementation.
 
-| Screen                                                              | Status                         |
-| ------------------------------------------------------------------- | ------------------------------ |
-| Shared app shell, navigation, theme, and brand config               | Done                           |
-| `/` public landing                                                  | Done                           |
-| `/services` catalogue                                               | Done                           |
-| `/plans` partner plans                                              | Done                           |
-| `/apply` application                                                | Done                           |
-| `/apply/verify` email verification                                  | Done                           |
-| `/apply/status` tokenized application status                        | Done                           |
-| `/order-status` tokenized customer order status                     | Done                           |
-| `/login` partner sign-in                                            | Done                           |
-| `/forgot-password`, `/reset-password` partner recovery              | Done                           |
-| `/2fa/verify` partner second factor                                 | Done                           |
-| `/admin/login`, `/admin/forgot-password` admin sign-in and recovery | Done                           |
-| `/admin/2fa/setup`, `/admin/2fa/verify` admin second factor         | Done                           |
-| `/change-password` forced password change                           | Done                           |
-| `/admin` dashboard                                                  | Done                           |
-| `/admin/applications` review queue                                  | Done                           |
-| `/admin/partners` partner management and hierarchy                  | Done                           |
-| `/admin/users` user management                                      | Done                           |
-| `/admin/audit` audit log                                            | Done                           |
-| `/admin/services` catalogue and pricing                             | Done                           |
-| `/admin/commissions` commission rules                               | Done                           |
-| `/admin/orders` order processing, assignment, status, attachments   | Done                           |
-| `/admin/wallet/topups` wallet top-up approvals                      | Done                           |
-| `/admin/ledger` immutable ledger viewer                             | Done                           |
-| `/admin/payouts` payout review and settlement                       | Done                           |
-| `/admin/tickets` support queue                                      | Done                           |
-| `/admin/reports` reports and CSV export                             | Done                           |
-| `/admin/content` content and notices                                | Done                           |
-| `/admin/roles` staff roles and permissions                          | Done                           |
-| `/admin/settings` GST and portal settings                           | Done                           |
-| `/partner` partner dashboard                                        | Built; browser recheck blocked |
-| `/partner/profile` profile and KYC                                  | Built; browser recheck blocked |
-| `/partner/network` partner network                                  | Built; browser recheck blocked |
-| `/partner/services` service catalogue and dynamic order forms       | Built; browser recheck blocked |
-| `/partner/orders` order list, detail, and status timeline           | Built; browser recheck blocked |
-| `/partner/wallet` balance, top-up, ledger, and statements           | Built; browser recheck blocked |
-| `/partner/commissions` commissions                                  | Built; browser recheck blocked |
-| `/partner/payouts` payout history                                   | Built; browser recheck blocked |
-| `/partner/customers` customer book                                  | Built; browser recheck blocked |
-| `/partner/tickets` support tickets                                  | Built; browser recheck blocked |
-| `/partner/notices` partner notices                                  | Built; browser recheck blocked |
-| `/partner/team` staff and lower-tier invitations                    | Built; browser recheck blocked |
-| Shared notifications and global search                              | Built; browser recheck blocked |
-| Partner leads, learning, invoice builder, and lead pages            | Not started                    |
+| Screen                                                                | Status                                 |
+| --------------------------------------------------------------------- | -------------------------------------- |
+| Shared app shell, navigation, theme, and brand config                 | Done                                   |
+| `/` public landing                                                    | Done                                   |
+| `/services` catalogue                                                 | Done                                   |
+| `/plans` partner plans                                                | Done                                   |
+| `/apply` application                                                  | Done                                   |
+| `/apply/verify` email verification                                    | Done                                   |
+| `/apply/status` tokenized application status                          | Done                                   |
+| `/order-status` tokenized customer order status                       | Done                                   |
+| `/login` partner sign-in                                              | Done                                   |
+| `/forgot-password`, `/reset-password` partner recovery                | Done                                   |
+| `/2fa/verify` partner second factor                                   | Done                                   |
+| `/admin/login`, `/admin/forgot-password` admin sign-in and recovery   | Done                                   |
+| `/admin/2fa/setup`, `/admin/2fa/verify` admin second factor           | Done                                   |
+| `/change-password` forced password change                             | Done                                   |
+| `/admin` dashboard                                                    | Done                                   |
+| `/admin/applications` review queue                                    | Done                                   |
+| `/admin/partners` partner management and hierarchy                    | Done                                   |
+| `/admin/users` user management                                        | Done                                   |
+| `/admin/audit` audit log                                              | Done                                   |
+| `/admin/services` catalogue and pricing                               | Done                                   |
+| `/admin/commissions` commission rules                                 | Done                                   |
+| `/admin/orders` order processing, assignment, status, attachments     | Done                                   |
+| `/admin/wallet/topups` wallet top-up approvals                        | Done                                   |
+| `/admin/ledger` immutable ledger viewer                               | Done                                   |
+| `/admin/payouts` payout review and settlement                         | Done                                   |
+| `/admin/tickets` support queue                                        | Done                                   |
+| `/admin/reports` reports and CSV export                               | Done                                   |
+| `/admin/content` content and notices                                  | Done                                   |
+| `/admin/roles` staff roles and permissions                            | Done                                   |
+| `/admin/settings` GST and portal settings                             | Done                                   |
+| `/partner` partner dashboard                                          | Built; browser recheck blocked         |
+| `/partner/profile` profile and KYC                                    | Built; browser recheck blocked         |
+| `/partner/network` partner network                                    | Built; browser recheck blocked         |
+| `/partner/services` service catalogue and dynamic order forms         | Built; browser recheck blocked         |
+| `/partner/orders` order list, detail, and status timeline             | Built; browser recheck blocked         |
+| `/partner/wallet` balance, top-up, ledger, and statements             | Built; browser recheck blocked         |
+| `/partner/commissions` commissions                                    | Built; browser recheck blocked         |
+| `/partner/payouts` payout history                                     | Built; browser recheck blocked         |
+| `/partner/customers` customer book                                    | Built; browser recheck blocked         |
+| `/partner/leads` ordered lead pipeline, consent, terminal outcomes    | Mock tests pass; browser check pending |
+| `/partner/tickets` support tickets                                    | Built; browser recheck blocked         |
+| `/partner/notices` partner notices                                    | Built; browser recheck blocked         |
+| `/partner/learn` quizzes, persisted scores, one-time certificate, kit | Mock tests pass; browser check pending |
+| `/partner/tools/invoice` clients, FY numbering, GST history and print | Mock tests pass; browser check pending |
+| `/partner/tools/lead-pages` create, publish, preview capture pages    | Mock tests pass; browser check pending |
+| `/p/[slug]` public consent capture, honeypot, mock rate limit         | Mock tests pass; browser check pending |
+| `/partner/team` staff and lower-tier invitations                      | Built; browser recheck blocked         |
+| Shared notifications and global search                                | Built; browser recheck blocked         |
 
 ## Review notes
 
@@ -75,16 +79,15 @@ Status means complete for the frontend demo, not merely present in the M2 implem
 - Mock mutations persist in local storage and write audit events. Money and approval actions require confirmation; role permissions gate the write controls and the mock adapter returns 403 for denied requests.
 - Checks: web mock adapter 8/8; frontend Playwright suite 4/4, including all 35 current routes at 375/768/1280 px and the admin approval/settings/export/audit flow. Main admin screenshots are in `docs/screenshots/`.
 - `make demo` runs only the mock Next.js frontend. `docs/DEMO.md` has launch instructions, role accounts, and a client walkthrough; refine that walkthrough after Step 4.
-- Framework decision: this is Next.js App Router + React; the roadmap names React + Vite + React Router. Keep Next.js for this demo. Its current standalone Docker image needs Node hosting, and live same-origin `/api` requests rely on the existing Caddy proxy. Do not migrate without owner approval.
+- D-01 reconciles the web stack to the repository: Next.js App Router runs as a standalone Node server, while Caddy routes same-origin `/api` calls to the NestJS API.
 
 ### Steps 3–6 continuation (2026-11-25)
 
-- Step 3 code is present across the admin dashboard, operations, finance, reports, content, roles, and settings routes. Current lint, typecheck, unit tests, and production build pass. The browser suite was expanded to check named buttons, capture admin and partner route screenshots, and exercise a partner order/top-up/customer/ticket/team flow. The latest Playwright attempt failed before test execution because Chromium could not launch (`bootstrap_check_in ... Permission denied`); `make demo` also failed to bind port 3000 (`listen EPERM`). The prior admin-only Playwright pass is historical evidence, not a current full-suite pass.
-- Step 4 now has mock-backed partner dashboard, catalogue/order creation, order tracking/query replies, wallet/top-ups/ledger, commissions, payouts, customers with consent, support tickets, notices, staff invitations/controls, network, profile/KYC, global search, and notifications. Web adapter tests cover scoped partner actions, KYC view audit, and team/customer/ticket mutations. The roadmap's partner leads, learning/marketing kit, invoice builder, and lead-page tools remain unbuilt and are listed as explicit gaps.
-- Step 5 includes responsive layouts, reduced-motion styling, route-level Next.js splitting, and a route-sweep check for horizontal overflow and accessible button names. The 375/768/1280 px sweep, console review, visual accessibility review, and screenshots for the new partner pages remain unverified until the demo can bind a local port.
-- Step 6 launch instructions and client flow are in `docs/DEMO.md`; `apps/web/README.md` now also has a short presenter run sheet. The demo target runs only the mock web app and does not launch Docker or a database. The browser demo itself could not be left running in this environment due to the port permission failure.
-- Exact current checks: `pnpm lint` passed; `pnpm typecheck` passed; `pnpm test` passed (web 9/9, shared 16/16, API 9 passed and 1 Mongo-only test skipped); `pnpm build` passed and generated 46 routes. `make check` passed those local stages and stopped at Docker-backed integration with a Docker socket permission denial. Do not describe Mongo integration or the current browser sweep as passing.
-- `BASE_URL=http://localhost:3000 pnpm exec playwright test e2e/frontend-demo-public-auth.spec.ts` was attempted; Chromium exited before test execution due Mach bootstrap permission denial. Starting the demo with `make demo` failed with `listen EPERM: operation not permitted 0.0.0.0:3000`. No local URL is currently verified reachable. Rerun Playwright and route sweeps after granting the workspace local browser and server permissions.
+- Step 3 code is present across the admin dashboard, operations, finance, reports, content, roles, and settings routes. Current lint, typecheck, unit tests, and production build pass. The owner reports running the site and Playwright; the pass/fail text was not included, so the Admin browser result is unconfirmed here.
+- Step 4 now includes partner leads with consent and sequential stages; learning progress; downloadable marketing copy; integer-paise GST calculation/print preview; draft/publish lead pages; and a public consent-gated capture form. Mock API tests cover partner scoping, progression rules, persistence, and audit events. The owner-run browser output was not included, and the suite has since been expanded to cover these flows.
+- Step 5 includes responsive layouts, reduced-motion styling, print styling, Next route-level splitting, and an automated route sweep for horizontal overflow, page/console errors, screenshots, and accessible button names. The updated suite covers the added screens. The latest browser review remains unverified; this agent did not launch a browser or server, per owner instruction.
+- Step 6 launch instructions and the expanded client walkthrough are in `docs/DEMO.md`; `apps/web/README.md` has a concise presenter run sheet. `make demo` runs only the mock web app and requires no database service.
+- Exact current checks: `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build` passed. Unit counts: web 10/10, shared 17/17, API 9 passed and 1 Mongo-only test skipped. The build generated 50 routes. The owner says `make demo` and Playwright were run, but the result placeholder arrived without output. Run `BASE_URL=http://localhost:3000 pnpm exec playwright test e2e/frontend-demo-public-auth.spec.ts` to verify latest flows and route sweeps at 375/768/1280 px. Docker-backed API and Mongo probes require `make check` with the local stack running.
 
 ## Owner prompt gap audit (2026-11-25)
 
@@ -114,3 +117,10 @@ These gaps take precedence over treating the original Step 1/2 checklist as comp
 - Mock data is the default. Set `VITE_API_MODE=http` to route requests to the real API.
 - Keep the deferred M2 tasks listed in `docs/PROGRESS.md` until the demo is accepted.
 - Do not merge `frontend-demo` to `main` without owner approval.
+
+### Step 4 acceptance additions
+
+- Lead pages now use `/p/[slug]`, a silent honeypot discard, required consent, per-IP and per-slug mock limits with `RATE_LIMITED`, and owner-partner assignment. Lead stages follow `new → contacted → qualified → won`, with `lost` from active stages and both outcomes terminal. `partner_staff` without lead permissions receives 403; records from another partner are hidden with 404.
+- The invoice tool has partner-scoped clients and history, parallel gapless numbering per partner and April–March financial year, client-state tax selection using shared paise/Money calculations, and browser print. PDF generation is tracked in `docs/QUESTIONS.md` for the real API.
+- Learning persists per-demo-user completion and quiz scores; every lesson has a multiple-choice quiz with an 80% pass mark, and the printable completion certificate is issued once after every lesson and quiz passes.
+- The focused mock suite now covers these contracts. Browser checks and new partner screenshots await the owner-run Playwright command because the browser/server were not started in this workspace.

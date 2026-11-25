@@ -4,8 +4,7 @@
 
 The repository uses Next.js App Router and NestJS on `@nestjs/platform-express`; MongoDB replica set/Mongoose/migrate-mongo; and BullMQ on Redis. Reconciled the roadmap and architecture docs to this implementation, documented the installed/missing web UI libraries, corrected the translation path, MongoDB runtime-role and repository-scoping language, and clarified that frontend Steps 4–6 are mock-adapter demo work rather than M7/M9/M10 completion. Added a static repository query scope test. The repository layer is not yet present in API modules; current direct Mongoose usage is recorded in `docs/QUESTIONS.md`, so this test protects the new layer but does not claim to cover existing queries.
 
-**D-01 verification, 2026-11-25:** `pnpm --filter @franchise-crm/api test` passed (11 passed, 1 Mongo-only integration skipped without `MONGODB_TEST_URI`). `make check` passed lint, typecheck, unit tests (web 10/10, shared 17/17, API 11 passed/1 skipped), and build (50 routes); its Docker API integration step could not connect to `/Users/admin/.docker/run/docker.sock` (`permission denied`), so Mongo integration and the authorization probe did not run. `make help` prints the stack and command list. `docker compose config` confirms the production-style web service has no volume mount; no services were started. D-01 is code/doc complete, with Docker-backed checks outstanding in this environment. Do not start D-02 until commit `D-01: stack reconciliation` is recorded.
-
+**D-01 verification, 2026-11-25:** `pnpm --filter @franchise-crm/api test` passed (11 passed, 1 Mongo-only integration skipped without `MONGODB_TEST_URI`). `make check` passed lint, typecheck, unit tests (web 10/10, shared 17/17, API 11 passed/1 skipped), and build (50 routes); its Docker API integration step could not connect to `/Users/admin/.docker/run/docker.sock` (`permission denied`), so Mongo integration and the authorization probe did not run. `make help` prints the stack and command list. `docker compose config` confirms the production-style web service has no volume mount; no services were started. D-01 docs/tests are committed as `9a1a91f`; Docker-backed checks remain outstanding in this environment.
 Work in task order. M1 was accepted by the owner on local evidence; live staging checks are deferred until release preparation.
 
 ## Deferred M2 (until the frontend demo is accepted)
@@ -17,16 +16,22 @@ Work in task order. M1 was accepted by the owner on local evidence; live staging
 
 These M2 items are intentionally paused while the frontend demo is built. Do not begin later backend milestones during this demo work.
 
+## D-02 — Step 4 frontend mock acceptance (in progress)
+
+Added failing-first mock tests for public lead honeypot/consent/rate limits and ownership, the ordered lead stages and terminal outcomes, partner_staff permission denial and cross-partner 404, invoice clients/history/parallel financial-year numbering/GST scope, and quiz scores/certificate gating. Implemented corresponding mock endpoints and shared schemas; no real API or database feature work was started. All new lead, learning, public capture, and invoice copy is in `apps/web/src/messages/en.json`.
+
+**D-02 checks, 2026-11-25:** `make check` passed lint, typecheck, unit tests (web 15/15, shared 17/17, API 11 passed/1 Mongo-only skipped), and Next/Nest build (50 web routes). It then exited at the Docker API integration step with `permission denied` for `/Users/admin/.docker/run/docker.sock`; Mongo integration and the authorization probe did not run. Playwright was not run because the owner previously directed this session not to start a server or browser. Have the owner run `make demo` and `BASE_URL=http://localhost:3000 pnpm exec playwright test e2e/frontend-demo-public-auth.spec.ts` in separate terminals; the suite includes the responsive route sweeps and screenshots. Do not merge to `main` or start M3.
+
 ## Frontend demo
 
 - Branch: `frontend-demo`, created from M2 commit `f1aff40`.
 - Step 1 foundation and Step 2 public/auth are complete. The prompt gap audit and detailed screen checklist are in `docs/FRONTEND_PLAN.md`.
-- Step 3 admin is complete for the demo: dashboard, applications/KYC review, partner hierarchy, users/roles, audit, catalogue pricing, commission rules, orders (assignment, lifecycle and private mock document attachment), top-up approvals, immutable ledger, payouts, tickets, CSV reports, notices, and GST settings. Mock mutations persist and emit audit events; write controls follow role permissions.
-- Checks on 2026-11-25: `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build` passed. Web mock tests: 8/8; shared tests: 14/14; API unit tests: 9 passed, 1 host-only Mongo integration skipped by default. The final Playwright run `BASE_URL=http://localhost:3000 pnpm exec playwright test e2e/frontend-demo-public-auth.spec.ts` passed 4/4 and opened all 35 routes at 375, 768, and 1280 px with no page/console errors or horizontal overflow.
-- Main public/auth/admin screenshots are in `docs/screenshots/`. `docs/DEMO.md` includes `make demo`, demo roles, and a client walkthrough.
-- `make demo` starts only the mock Next.js frontend at `http://localhost:3000`; it requires no Docker or database. The local server is left running. MongoDB remains the primary project database; Redis remains limited to sessions and queues.
-- Framework difference: the app is Next.js App Router + React, not Vite + React Router. Keep Next.js during the demo build; Docker currently uses the Next standalone Node server, and same-origin live API requests rely on Caddy. No framework migration was made.
-- Step 4 partner area is next. Do not merge the demo branch to `main` without owner approval.
+- Step 3 admin screens and mock actions are implemented. Step 4 includes lead pages with honeypot, consent and mock throttling; terminal lead outcomes and partner staff denial; learning quizzes and a one-time certificate; saved invoice clients/history with partner/FY numbering, state-based GST and print; and partner-owned public lead capture. These actions persist in local demo data, enforce permission/partner scope and write audit entries.
+- Step 5 includes responsive styles, reduced-motion and print styles, and a route sweep for page/console errors, named buttons, screenshots, and horizontal overflow at 375, 768, and 1280 px. Step 6 demo instructions and presenter run sheet are in `docs/DEMO.md` and `apps/web/README.md`.
+- Checks on 2026-11-25: `make check` passed lint, typecheck, unit tests (web 15/15, shared 17/17, API 11 passed with one Mongo-only test skipped), and build (50 routes). It stopped at API integration because Docker socket access was denied; Mongo integration and authorization probe did not run. The owner-run Playwright/browser route sweep remains outstanding.
+- Main public/auth/admin screenshots are already in `docs/screenshots/`. The updated Playwright route sweep will generate the new partner and public lead-page screenshots there. MongoDB remains the primary database; Redis remains limited to sessions and queues.
+- Stack is Next.js App Router + React with a NestJS API; the production-style web container uses the standalone Node server and Caddy proxies same-origin API requests.
+- Do not merge the demo branch to `main` without owner approval. M3 remains out of scope for this frontend demo.
 
 ## M0 — Foundation (weeks 1–2)
 

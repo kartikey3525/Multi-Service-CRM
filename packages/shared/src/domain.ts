@@ -198,6 +198,95 @@ export const CustomerSchema = z.object({
 });
 export type CustomerRecord = z.infer<typeof CustomerSchema>;
 
+export const PartnerLeadSchema = z.object({
+  _id: id,
+  partnerId: id,
+  name: z.string().min(2),
+  businessName: z.string().min(1),
+  mobile: z.string(),
+  source: z.string(),
+  stage: z.enum(['new', 'contacted', 'qualified', 'won', 'lost']),
+  createdAt: isoDate,
+  updatedAt: isoDate,
+});
+export type PartnerLeadRecord = z.infer<typeof PartnerLeadSchema>;
+
+export const PartnerLeadPageSchema = z.object({
+  _id: id,
+  partnerId: id,
+  title: z.string().min(1),
+  headline: z.string().min(1),
+  description: z.string().min(1),
+  slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  status: z.enum(['draft', 'published']),
+  createdAt: isoDate,
+});
+export type PartnerLeadPageRecord = z.infer<typeof PartnerLeadPageSchema>;
+
+export const LearningProgressSchema = z.object({
+  userId: id,
+  completed: z.array(z.enum(['onboarding', 'documents', 'wallet-orders'])),
+  quizScores: z
+    .array(
+      z.object({
+        lessonId: z.enum(['onboarding', 'documents', 'wallet-orders']),
+        score: z.number().int().min(0).max(100),
+        passed: z.boolean(),
+        completedAt: isoDate,
+      }),
+    )
+    .default([]),
+  certificateIssuedAt: isoDate.nullable().optional(),
+});
+export type LearningProgressRecord = z.infer<typeof LearningProgressSchema>;
+
+export const InvoiceClientSchema = z.object({
+  _id: id,
+  partnerId: id,
+  name: z.string().min(2),
+  businessName: z.string().min(1),
+  email: z.string().email().nullable(),
+  mobile: z.string().regex(/^\+?[0-9]{10,15}$/),
+  state: z.string().min(2),
+  gstin: z.string().nullable(),
+  createdAt: isoDate,
+  updatedAt: isoDate,
+});
+export type InvoiceClientRecord = z.infer<typeof InvoiceClientSchema>;
+
+export const PartnerToolInvoiceSchema = z.object({
+  _id: id,
+  partnerId: id,
+  clientId: id,
+  number: z.string(),
+  issueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  lines: z
+    .array(
+      z.object({
+        description: z.string().min(1),
+        quantity: z.number().int().positive(),
+        unitAmountPaise: paise.nonnegative(),
+        gstRateBps: z.number().int().min(0).max(2800),
+      }),
+    )
+    .min(1),
+  subtotalPaise: paise.nonnegative(),
+  cgstPaise: paise.nonnegative(),
+  sgstPaise: paise.nonnegative(),
+  igstPaise: paise.nonnegative(),
+  totalPaise: paise.nonnegative(),
+  createdAt: isoDate,
+});
+export type PartnerToolInvoiceRecord = z.infer<typeof PartnerToolInvoiceSchema>;
+
+export const LeadStage = {
+  New: 'new',
+  Contacted: 'contacted',
+  Qualified: 'qualified',
+  Won: 'won',
+  Lost: 'lost',
+} as const;
+
 export const IdentityUserSchema = z.object({
   _id: id,
   email: z.string().email(),

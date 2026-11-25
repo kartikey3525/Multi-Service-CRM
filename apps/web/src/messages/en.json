@@ -259,5 +259,369 @@
     "approvedResult": "Partner created with status pending payment. An account setup link was queued.",
     "updatedResult": "Application updated and the applicant was notified.",
     "error": "Could not complete the application action."
+  },
+  "partnerGrowth": {
+    "views": {
+      "leads": {
+        "title": "Leads",
+        "description": "Track prospects, follow-ups, and the next step toward a customer relationship."
+      },
+      "learning": {
+        "title": "Learning and marketing kit",
+        "description": "Build service knowledge and download approved materials for your local outreach."
+      },
+      "invoice": {
+        "title": "GST invoice builder",
+        "description": "Prepare and save customer invoices using line-level GST rounding."
+      },
+      "leadPages": {
+        "title": "Lead capture pages",
+        "description": "Create a branded page preview and collect customer-approved enquiries."
+      }
+    },
+    "actions": {
+      "addProspect": "Add prospect",
+      "saveLead": "Save lead",
+      "markComplete": "Mark complete",
+      "completed": "Completed",
+      "publishPage": "Publish page",
+      "createPreview": "Create preview",
+      "openCapture": "Open capture page",
+      "submitSample": "Submit sample enquiry",
+      "calculate": "Calculate preview",
+      "saveInvoice": "Save invoice",
+      "print": "Print",
+      "printPreview": "Print preview",
+      "submitQuiz": "Submit quiz",
+      "issueCertificate": "Issue completion certificate",
+      "printCertificate": "Print certificate",
+      "downloadCopy": "Download copy"
+    },
+    "labels": {
+      "workspace": "Partner workspace",
+      "breadcrumbPartner": "Partner",
+      "source": "Source",
+      "consent": "I have permission to contact this prospect",
+      "consentPublic": "I agree to be contacted about this enquiry.",
+      "name": "Your name",
+      "business": "Business name",
+      "mobile": "Mobile",
+      "learningPath": "Learning path",
+      "completedByUser": "Modules completed by this demo account",
+      "marketingKit": "Marketing kit",
+      "resources": "3 resources",
+      "readyResources": "Ready-to-edit outreach material",
+      "invoiceDetails": "Invoice details",
+      "invoiceEstimate": "This browser-only invoice tool saves demo invoice history. Confirm your tax treatment with your accountant before issuing a tax invoice.",
+      "description": "Customer / service description",
+      "taxableAmount": "Taxable amount (₹)",
+      "gstRate": "GST rate (%)",
+      "intraState": "Intra-state supply (CGST + SGST)",
+      "draftNotIssued": "Draft · not issued",
+      "invoicePreview": "Customer invoice preview",
+      "taxable": "Taxable amount",
+      "cgst": "CGST",
+      "sgst": "SGST",
+      "igst": "IGST",
+      "total": "Total",
+      "leadPages": "Lead capture pages",
+      "pageName": "Page name",
+      "headline": "Headline",
+      "supportingText": "Supporting text",
+      "publicLink": "Public demo link: /p/{slug}",
+      "previewForm": "Preview enquiry form",
+      "noLeads": "No leads yet",
+      "noLeadsHint": "Add a prospect or capture an enquiry from one of your lead pages.",
+      "noPages": "No lead pages yet",
+      "noPagesHint": "Create a page to preview the customer enquiry form.",
+      "leadPipeline": "Lead pipeline",
+      "followUp": "Follow-up",
+      "nextStage": "Advance stage",
+      "lost": "Mark lost",
+      "currentStatus": "Status",
+      "module": "Module {number}",
+      "learningModules": "Learning modules completed by this demo account",
+      "tellReach": "Tell us how to reach you",
+      "publicIntro": "Share only the details needed for this enquiry. Your permission is required before the partner follows up.",
+      "publicDisclaimer": "This is a demonstration page. Do not enter real customer information.",
+      "unavailable": "Enquiry page unavailable",
+      "loading": "Loading enquiry page…",
+      "home": "Home",
+      "enquiry": "Enquiry",
+      "certificate": "Completion certificate",
+      "certificateIssued": "Issued to {name} on {date}",
+      "passMark": "Pass mark: 80%",
+      "markLost": "Mark lost"
+    },
+    "messages": {
+      "loadError": "Could not load this workspace.",
+      "leadSaved": "Lead saved to your pipeline.",
+      "leadMoved": "Lead moved to {stage}.",
+      "lessonComplete": "Lesson marked complete.",
+      "pageCreated": "Lead page “{title}” is ready for preview.",
+      "pagePublished": "Lead page published in the local demo.",
+      "enquiryReceived": "Enquiry received and added to your leads.",
+      "invoiceSaved": "Invoice {number} saved to history.",
+      "quizPassed": "Quiz score: {score}%. Passed.",
+      "quizFailed": "Quiz score: {score}%. Try the quiz again.",
+      "certificateIssued": "Your completion certificate is ready to print.",
+      "leadCaptureSuccess": "Thanks. Your enquiry has been sent to the local demo partner."
+    },
+    "errors": {
+      "saveLead": "Could not save this lead.",
+      "updateLead": "Could not update this lead.",
+      "saveProgress": "Could not save lesson progress.",
+      "createPage": "Could not create the lead page.",
+      "publishPage": "Could not publish the lead page.",
+      "captureLead": "Could not capture this enquiry.",
+      "invalidRate": "Enter a GST rate from 0% to 28%, with up to two decimals.",
+      "rateRange": "GST rate must be between 0% and 28%.",
+      "invalidInvoice": "Enter a valid invoice amount.",
+      "unavailable": "This enquiry page is unavailable.",
+      "submitEnquiry": "Could not submit this enquiry.",
+      "invoice": "Could not save this invoice.",
+      "quiz": "Could not submit this quiz.",
+      "certificate": "Could not issue this certificate.",
+      "partnerProfile": "Partner profile not found.",
+      "invalidClient": "Enter a valid client name, business, mobile, and state.",
+      "invalidEmail": "Enter a valid client email address.",
+      "clientNotFound": "Invoice client not found.",
+      "invalidDate": "Choose a valid invoice date.",
+      "invoiceLines": "Add between one and fifty invoice lines.",
+      "invalidInvoiceLines": "Check invoice descriptions, quantities, amounts, and GST rates.",
+      "consentLead": "Record permission to contact this prospect.",
+      "invalidLead": "Enter a name, business, and valid mobile number.",
+      "leadNotFound": "Lead not found.",
+      "invalidLeadStage": "Choose a valid lead stage.",
+      "terminalLead": "Won and lost leads are terminal.",
+      "leadTransition": "Move a lead forward one stage at a time, or mark it lost.",
+      "invalidLesson": "Choose a valid learning module.",
+      "invalidQuiz": "Choose a valid learning quiz.",
+      "learningIncomplete": "Complete all lessons and pass every quiz first.",
+      "certificateIssued": "The completion certificate has already been issued.",
+      "publicConsent": "Consent is required before sending an enquiry.",
+      "rateLimited": "Please wait before sending another enquiry.",
+      "invalidLeadPage": "Complete the title, headline, and supporting text.",
+      "invalidLeadPageStatus": "Choose a valid lead page status.",
+      "leadPageNotFound": "Lead page not found."
+    },
+    "leads": {
+      "title": "Leads",
+      "description": "Track a prospect through the follow-up stages.",
+      "name": "First customer conversation",
+      "details": "Understand the need, explain the service steps, and capture consent.",
+      "onboarding": "Onboarding",
+      "contacted": "Contacted",
+      "qualified": "Qualified",
+      "won": "Won",
+      "lost": "Lost",
+      "addTitle": "Add a prospect",
+      "businessPlaceholder": "Business name",
+      "stageNew": "New",
+      "stageContacted": "Contacted",
+      "stageQualified": "Qualified",
+      "stageWon": "Won",
+      "stageLost": "Lost",
+      "walkIn": "Walk-in",
+      "referral": "Referral",
+      "leadPage": "Lead page",
+      "campaign": "Local campaign",
+      "prospectCount": "{count} prospects in your workspace",
+      "contact": "Contact",
+      "complete": "Complete",
+      "notStarted": "Not started"
+    },
+    "learning": {
+      "lessons": [
+        {
+          "id": "onboarding",
+          "title": "First customer conversation",
+          "detail": "Understand the need, explain the service steps, and capture consent.",
+          "questions": [
+            {
+              "id": "consent",
+              "question": "What should you do before following up?",
+              "choices": [
+                {
+                  "value": "ask",
+                  "label": "Ask and record customer consent"
+                },
+                {
+                  "value": "skip",
+                  "label": "Assume permission"
+                }
+              ]
+            },
+            {
+              "id": "followup",
+              "question": "How should you follow up?",
+              "choices": [
+                {
+                  "value": "call",
+                  "label": "Use the agreed contact method"
+                },
+                {
+                  "value": "broadcast",
+                  "label": "Send repeated messages"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "documents",
+          "title": "Preparing a complete application",
+          "detail": "Use the service checklist to reduce missing-document follow-ups.",
+          "questions": [
+            {
+              "id": "documents",
+              "question": "How do you reduce missing documents?",
+              "choices": [
+                {
+                  "value": "checklist",
+                  "label": "Use the current service checklist"
+                },
+                {
+                  "value": "guess",
+                  "label": "Send a generic list"
+                }
+              ]
+            },
+            {
+              "id": "identity",
+              "question": "What should you check on identity documents?",
+              "choices": [
+                {
+                  "value": "verify",
+                  "label": "Check readable scans and matching details"
+                },
+                {
+                  "value": "ignore",
+                  "label": "Skip the name check"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "wallet-orders",
+          "title": "Orders and wallet basics",
+          "detail": "Review fees, order status, customer tracking, and top-up requests.",
+          "questions": [
+            {
+              "id": "balance",
+              "question": "How are wallet balances changed?",
+              "choices": [
+                {
+                  "value": "ledger",
+                  "label": "Through ledger entries"
+                },
+                {
+                  "value": "edit",
+                  "label": "By editing the balance directly"
+                }
+              ]
+            },
+            {
+              "id": "status",
+              "question": "How can a customer check order progress?",
+              "choices": [
+                {
+                  "value": "tracking",
+                  "label": "Use the secure tracking link"
+                },
+                {
+                  "value": "password",
+                  "label": "Share the partner password"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "marketing": [
+        {
+          "title": "Service introduction",
+          "description": "A short message to introduce your local service desk.",
+          "file": "service-introduction.txt",
+          "copy": "Hello! I can help you understand the steps and documents for your business service request. Would you like a quick call?"
+        },
+        {
+          "title": "Document checklist",
+          "description": "A reminder to confirm the service-specific document list before an application.",
+          "file": "document-checklist.txt",
+          "copy": "Before submitting, confirm the current service checklist, readable document scans, matching name details, and customer consent."
+        },
+        {
+          "title": "Follow-up note",
+          "description": "A courteous check-in for a prospect who requested more information.",
+          "file": "follow-up-note.txt",
+          "copy": "Thanks for speaking with me. I am following up on your service enquiry. Reply when convenient and I can explain the next steps."
+        }
+      ],
+      "quizTitle": "Knowledge check",
+      "lastScore": "Latest score: {score}%",
+      "passedSuffix": " · passed",
+      "retrySuffix": " · try again",
+      "certificateBody": "has completed the partner learning path.",
+      "certificateHolder": "Service Network Partner",
+      "certificateDate": "Issued on {date}",
+      "marketingIntro": "Use these editable starting points and check each piece against current approved offers."
+    },
+    "invoice": {
+      "defaultSubtotal": "2500.00",
+      "defaultRate": "18",
+      "defaultDescription": "Business registration assistance",
+      "defaultDate": "2026-11-25",
+      "savedClients": "Invoice clients",
+      "clientName": "Client name",
+      "clientBusiness": "Business name",
+      "clientEmail": "Email (optional)",
+      "clientMobile": "Mobile",
+      "clientState": "Client state",
+      "clientGstin": "GSTIN (optional)",
+      "saveClient": "Save client",
+      "chooseClient": "Choose a saved client",
+      "issueDate": "Invoice date",
+      "savedInvoices": "Invoice history",
+      "noInvoices": "No invoices saved yet.",
+      "issued": "Issued",
+      "saveClientError": "Save or choose a client first.",
+      "invalidClient": "Enter a valid client name, business, mobile, and state.",
+      "clientSaved": "Client saved.",
+      "intraState": "Local supply",
+      "interState": "Inter-state supply"
+    },
+    "publicLead": {
+      "title": "Lead enquiry",
+      "description": "Share your details with this local partner.",
+      "consent": "I agree to be contacted about this enquiry.",
+      "name": "Your name",
+      "business": "Business name",
+      "mobile": "Mobile",
+      "send": "Send enquiry",
+      "sending": "Sending…",
+      "honey": "Leave this field blank",
+      "invalidPage": "This enquiry page is unavailable.",
+      "loading": "Loading enquiry page…",
+      "success": "Thanks. Your enquiry has been sent to the local demo partner.",
+      "error": "Could not submit this enquiry.",
+      "privacy": "Share only the details needed for this enquiry. Your permission is required before the partner follows up.",
+      "demoNotice": "This is a demonstration page. Do not enter real customer information."
+    },
+    "leadPages": {
+      "createTitle": "Create a lead page",
+      "pageName": "Page name",
+      "headline": "Headline",
+      "supportingText": "Supporting text",
+      "publish": "Publish page",
+      "open": "Open capture page",
+      "publicLink": "Public demo link: /p/{slug}",
+      "preview": "Preview enquiry form",
+      "submitSample": "Submit sample enquiry",
+      "consent": "I agree to be contacted about this enquiry",
+      "noPages": "No lead pages yet",
+      "noPagesHint": "Create a page to preview the customer enquiry form."
+    }
   }
 }

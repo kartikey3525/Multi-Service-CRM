@@ -62,6 +62,8 @@ export const demoUsers: Record<'admin' | 'partner', DemoUser> = {
       'tickets.manage',
       'customers.read',
       'customers.manage',
+      'leads.read',
+      'leads.manage',
       'services.read',
       'content.read',
     ],
@@ -246,6 +248,9 @@ export const demoRoles = [
       'wallet.read',
       'wallet.topup_request',
       'services.read',
+      'leads.read',
+      'leads.manage',
+      'content.read',
     ],
   },
   {
@@ -262,6 +267,9 @@ export const demoRoles = [
       'services.read',
       'team.read',
       'team.manage',
+      'leads.read',
+      'leads.manage',
+      'content.read',
     ],
   },
   {
@@ -278,6 +286,9 @@ export const demoRoles = [
       'services.read',
       'team.read',
       'team.manage',
+      'leads.read',
+      'leads.manage',
+      'content.read',
     ],
   },
   {
@@ -376,6 +387,16 @@ const adminDemoUsers: DemoUser[] = [
 
 const partnerDemoUsers: DemoUser[] = [
   demoUsers.partner,
+  {
+    id: '64a900000000000000000001',
+    email: 'partner.staff@servicenetwork.demo',
+    name: 'Partner staff',
+    kind: 'partner',
+    roleNames: ['Partner staff'],
+    permissions: ['identity.me', 'orders.read', 'services.read'],
+    totpEnabled: false,
+    partner: demoUsers.partner.partner!,
+  },
   ...(['distributor', 'retailer'] as const).map((tier, index): DemoUser => {
     const partner = demoPartners.find((item) => item.tier === tier && item.status === 'active')!;
     return {
