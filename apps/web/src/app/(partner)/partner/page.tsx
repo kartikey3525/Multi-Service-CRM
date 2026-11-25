@@ -1,5 +1,5 @@
-import { CurrentUser } from '../../../components/current-user';
+import { PartnerWorkspace } from '../../../components/partner-workspace';
 
 export default function PartnerHomePage() {
-  return <CurrentUser kind="partner" />;
+  return <PartnerWorkspace view="dashboard" />;
 }

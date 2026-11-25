@@ -8,6 +8,15 @@ test('Money accepts safe integer paise and rejects fractions or overflow', () =>
   assert.throws(() => Money.fromPaise(Number.MAX_SAFE_INTEGER + 1), RangeError);
 });
 
+test('Money parses rupee strings exactly to integer paise', () => {
+  assert.equal(Money.fromRupeesString('1').paise, 100);
+  assert.equal(Money.fromRupeesString('1200.5').paise, 120050);
+  assert.equal(Money.fromRupeesString('0.09').paise, 9);
+  assert.equal(Money.fromRupeesString('-0.01').paise, -1);
+  for (const invalid of ['1.001', '₹2.00', 'NaN', ''])
+    assert.throws(() => Money.fromRupeesString(invalid), RangeError);
+});
+
 test('Money arithmetic stays in integer paise and checks overflow', () => {
   assert.equal(Money.fromPaise(125).add(Money.fromPaise(25)).paise, 150);
   assert.equal(Money.fromPaise(125).subtract(Money.fromPaise(200)).paise, -75);

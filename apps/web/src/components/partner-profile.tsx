@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { apiGet, readCsrfCookie } from '../lib/api-client';
+import { apiGet, apiUpload } from '../lib/api-client';
 
 type Profile = {
   user: {
@@ -54,14 +54,7 @@ export function PartnerProfile() {
       form.set('ownerId', profile.id);
       form.set('docType', docType);
       form.set('file', file);
-      const response = await fetch('/api/v1/files/kyc', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'x-csrf-token': readCsrfCookie() },
-        body: form,
-      });
-      const result = (await response.json().catch(() => null)) as { message?: string } | null;
-      if (!response.ok) throw new Error(result?.message ?? `Upload failed (${response.status}).`);
+      await apiUpload('/v1/files/kyc', form);
       setFile(undefined);
       setNotice('KYC document uploaded securely for review.');
       await refresh();

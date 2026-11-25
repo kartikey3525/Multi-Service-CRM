@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { PartnerUserSchema } from './domain.js';
 import { Permission } from './permissions';
 import {
   ApplicationStatus,
@@ -43,4 +44,21 @@ test('workflow status values preserve the roadmap contract', () => {
     'refunded',
   ]);
   assert.deepEqual(Object.values(PayoutStatus), ['requested', 'batched', 'paid', 'rejected']);
+});
+
+test('partner user membership validates the Mongo partner_users record shape', () => {
+  assert.equal(
+    PartnerUserSchema.parse({
+      _id: '64ab00000000000000000001',
+      partnerId: '64a100000000000000000003',
+      userId: '64a100000000000000000002',
+      role: 'staff',
+      staffPermissions: ['orders.read', 'wallet.read'],
+      status: 'disabled',
+      createdAt: '2026-11-25T10:00:00.000Z',
+      updatedAt: '2026-11-25T10:00:00.000Z',
+    }).status,
+    'disabled',
+  );
+  assert.equal(PartnerUserSchema.safeParse({ role: 'owner', staffPermissions: [] }).success, false);
 });

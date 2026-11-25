@@ -9,6 +9,20 @@ export class Money {
     return new Money(paise);
   }
 
+  /** Parse a decimal rupee string exactly; no binary floating point is used. */
+  static fromRupeesString(value: string): Money {
+    const normalized = value.trim();
+    const match = /^(-?)(\d+)(?:\.(\d{1,2}))?$/.exec(normalized);
+    if (!match) throw new RangeError('Enter rupees with at most two decimal places.');
+    const sign = match[1] === '-' ? -1n : 1n;
+    const rupees = BigInt(match[2]!);
+    const paise = BigInt((match[3] ?? '').padEnd(2, '0') || '0');
+    const total = sign * (rupees * 100n + paise);
+    const safe = Number(total);
+    if (!Number.isSafeInteger(safe)) throw new RangeError('Money exceeds the safe paise range.');
+    return Money.fromPaise(safe);
+  }
+
   static zero(): Money {
     return new Money(0);
   }

@@ -212,6 +212,18 @@ export const IdentityUserSchema = z.object({
 });
 export type IdentityUserRecord = z.infer<typeof IdentityUserSchema>;
 
+export const PartnerUserSchema = z.object({
+  _id: id,
+  partnerId: id,
+  userId: id,
+  role: z.enum(['owner', 'staff']),
+  staffPermissions: z.array(z.string()),
+  status: z.enum(['active', 'disabled']),
+  createdAt: isoDate,
+  updatedAt: isoDate,
+});
+export type PartnerUserRecord = z.infer<typeof PartnerUserSchema>;
+
 export const RoleSchema = z.object({
   _id: id,
   key: z.string(),

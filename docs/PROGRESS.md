@@ -14,12 +14,13 @@ These M2 items are intentionally paused while the frontend demo is built. Do not
 ## Frontend demo
 
 - Branch: `frontend-demo`, created from M2 commit `f1aff40`.
-- Step 1 foundation gap repair is complete: shared Mongo record Zod schemas/types, typed domain client, mock-default/HTTP transport selection, persisted realistic fixtures, reset control, permission/subtree enforcement, lifecycle and ledger rules, GST line rounding, and mock adapter unit tests. The complete clickable admin/partner screen inventory and business flow remain to be built.
-- Step 2 public/auth gaps are closed: tokenized application and customer order status, forced password change, per-role sign-in shortcuts, and the original public/auth screens.
-- Checks on 2026-11-25: `make check` passed lint, typecheck, all unit tests (web mock 6/6, shared 14/14), build, Mongo integration (1/1), and the authorization probe. `BASE_URL=http://localhost:3000 pnpm e2e e2e/demo-mode.spec.ts e2e/frontend-demo-public-auth.spec.ts` passed 5/5. The responsive browser review opened all 24 current routes at 375, 768, and 1280 px with no page/console errors or horizontal overflow.
-- Main 1280 px screenshots are committed in `docs/screenshots/`. The step-by-step screen checklist is in `docs/FRONTEND_PLAN.md`.
-- Local mock-only site is running at `http://localhost:3000` via `pnpm --filter @franchise-crm/web dev`; no database or Redis is required for the demo. The repository has no root `make dev` target, so this documented command currently starts the site.
-- Step 3 admin area is next; the demo branch is not merged to `main`.
+- Step 1 foundation and Step 2 public/auth are complete. The prompt gap audit and detailed screen checklist are in `docs/FRONTEND_PLAN.md`.
+- Step 3 admin is complete for the demo: dashboard, applications/KYC review, partner hierarchy, users/roles, audit, catalogue pricing, commission rules, orders (assignment, lifecycle and private mock document attachment), top-up approvals, immutable ledger, payouts, tickets, CSV reports, notices, and GST settings. Mock mutations persist and emit audit events; write controls follow role permissions.
+- Checks on 2026-11-25: `pnpm lint`, `pnpm typecheck`, `pnpm test`, and `pnpm build` passed. Web mock tests: 8/8; shared tests: 14/14; API unit tests: 9 passed, 1 host-only Mongo integration skipped by default. The final Playwright run `BASE_URL=http://localhost:3000 pnpm exec playwright test e2e/frontend-demo-public-auth.spec.ts` passed 4/4 and opened all 35 routes at 375, 768, and 1280 px with no page/console errors or horizontal overflow.
+- Main public/auth/admin screenshots are in `docs/screenshots/`. `docs/DEMO.md` includes `make demo`, demo roles, and a client walkthrough.
+- `make demo` starts only the mock Next.js frontend at `http://localhost:3000`; it requires no Docker or database. The local server is left running. MongoDB remains the primary project database; Redis remains limited to sessions and queues.
+- Framework difference: the app is Next.js App Router + React, not Vite + React Router. Keep Next.js during the demo build; Docker currently uses the Next standalone Node server, and same-origin live API requests rely on Caddy. No framework migration was made.
+- Step 4 partner area is next. Do not merge the demo branch to `main` without owner approval.
 
 ## M0 — Foundation (weeks 1–2)
 

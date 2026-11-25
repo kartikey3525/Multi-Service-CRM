@@ -8,7 +8,7 @@ test('partner can enter the mock workspace from the public shell', async ({ page
   await page.getByLabel('Password').fill('demo-password');
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page).toHaveURL(/\/partner$/);
-  await expect(page.getByRole('heading', { name: 'Riya Kapoor' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Welcome back, Riya/ })).toBeVisible();
 });
 
 test('admin mock sign-in keeps the second-factor step', async ({ page }) => {

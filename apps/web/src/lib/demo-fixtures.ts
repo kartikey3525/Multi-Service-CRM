@@ -51,6 +51,7 @@ export const demoUsers: Record<'admin' | 'partner', DemoUser> = {
       'files.upload',
       'files.download',
       'team.read',
+      'team.manage',
       'orders.read',
       'orders.create',
       'wallet.read',
@@ -260,6 +261,7 @@ export const demoRoles = [
       'wallet.topup_request',
       'services.read',
       'team.read',
+      'team.manage',
     ],
   },
   {
@@ -275,6 +277,7 @@ export const demoRoles = [
       'wallet.topup_request',
       'services.read',
       'team.read',
+      'team.manage',
     ],
   },
   {
@@ -381,7 +384,12 @@ const partnerDemoUsers: DemoUser[] = [
       name: tier === 'distributor' ? 'Devendra Kulkarni' : 'Mira Shah',
       kind: 'partner',
       roleNames: [tier === 'distributor' ? 'Distributor' : 'Retailer'],
-      permissions: demoUsers.partner.permissions,
+      permissions:
+        tier === 'retailer'
+          ? demoUsers.partner.permissions.filter(
+              (permission) => permission !== 'team.read' && permission !== 'team.manage',
+            )
+          : demoUsers.partner.permissions,
       totpEnabled: false,
       partner: { id: partner.id, code: partner.code, tier, status: partner.status },
       ...(tier === 'retailer' ? { mustChangePassword: true } : {}),

@@ -1,4 +1,7 @@
-.PHONY: up up-dev down logs check api-test mongo-probe e2e migrate migrate-dev seed seed-dev
+.PHONY: up up-dev down logs check api-test mongo-probe e2e migrate migrate-dev seed seed-dev demo
+
+demo:
+	VITE_API_MODE=mock pnpm --filter @franchise-crm/web dev
 
 up:
 	docker compose --env-file .env.example up --build --wait -d

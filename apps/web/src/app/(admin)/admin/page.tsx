@@ -1,5 +1,5 @@
-import { CurrentUser } from '../../../components/current-user';
+import { AdminWorkspace } from '../../../components/admin-workspace';
 
 export default function AdminHomePage() {
-  return <CurrentUser kind="admin" />;
+  return <AdminWorkspace view="home" />;
 }

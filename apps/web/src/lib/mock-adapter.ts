@@ -54,12 +54,26 @@ function requiredPermission(path: string, method: string): string | null {
     return method === 'GET' ? 'partners.read' : 'partners.manage';
   if (path.startsWith('/v1/admin/users'))
     return method === 'GET' ? 'admin_users.read' : 'admin_users.write';
-  if (path.startsWith('/v1/admin/roles')) return 'admin_users.read';
+  if (path.startsWith('/v1/admin/roles')) return method === 'GET' ? 'roles.read' : 'roles.manage';
+  if (path.startsWith('/v1/admin/commissions'))
+    return method === 'GET' ? 'commissions.read' : 'commissions.manage';
+  if (path.startsWith('/v1/admin/payouts'))
+    return method === 'GET' ? 'payouts.read' : 'payouts.manage';
+  if (path.startsWith('/v1/admin/tickets'))
+    return method === 'GET' ? 'tickets.read' : 'tickets.manage';
+  if (path.startsWith('/v1/admin/services'))
+    return method === 'GET' ? 'services.read' : 'services.manage';
   if (path.startsWith('/v1/admin/audit')) return 'audit.read';
+  if (path.startsWith('/v1/notifications') || path.startsWith('/v1/search')) return 'identity.me';
   if (path.startsWith('/v1/partner/network')) return 'team.read';
+  if (path.startsWith('/v1/partner/invites')) return 'team.manage';
+  if (path.startsWith('/v1/partner/team')) return method === 'GET' ? 'team.read' : 'team.manage';
+  if (path.startsWith('/v1/partner/notices')) return 'content.read';
   if (path.startsWith('/v1/partner/customers'))
     return method === 'GET' ? 'customers.read' : 'customers.manage';
   if (path.startsWith('/v1/files/kyc')) return method === 'GET' ? 'files.download' : 'files.upload';
+  if (path.startsWith('/v1/orders/') && path.endsWith('/documents')) return 'orders.process';
+  if (path.startsWith('/v1/orders/') && path.endsWith('/query')) return 'orders.create';
   if (path.startsWith('/v1/orders'))
     return method === 'GET'
       ? 'orders.read'
@@ -78,8 +92,10 @@ function requiredPermission(path: string, method: string): string | null {
     return method === 'GET' ? 'tickets.read' : 'tickets.manage';
   if (path.startsWith('/v1/services')) return 'services.read';
   if (path.startsWith('/v1/admin/reports')) return 'reports.read';
-  if (path.startsWith('/v1/admin/content')) return 'content.read';
-  if (path.startsWith('/v1/admin/settings')) return 'settings.read';
+  if (path.startsWith('/v1/admin/content'))
+    return method === 'GET' ? 'content.read' : 'content.manage';
+  if (path.startsWith('/v1/admin/settings'))
+    return method === 'GET' ? 'settings.read' : 'settings.manage';
   if (path.startsWith('/v1/admin') || path.startsWith('/v1/partner')) return 'identity.me';
   return null;
 }
@@ -403,7 +419,263 @@ export async function mockApiFetch(
     );
   if (path === '/v1/admin/audit')
     return json({ items: readMockData().audit, total: readMockData().audit.length });
-  if (path === '/v1/services' && method === 'GET') return json({ items: demoServices });
+  if (path === '/v1/notifications' && method === 'GET') {
+    const userId = currentDemoUser()?.id;
+    const items = readMockData().notifications.filter((item) => item.userId === userId);
+    return json({ items, total: items.length });
+  }
+  if (path === '/v1/notifications/read' && method === 'POST') {
+    const userId = currentDemoUser()?.id;
+    const id = String(body.id ?? '');
+    const now = new Date().toISOString();
+    updateMockData((data) => ({
+      ...data,
+      notifications: data.notifications.map((item) =>
+        item.userId === userId && (id === 'all' || item._id === id)
+          ? { ...item, readAt: now }
+          : item,
+      ),
+    }));
+    writeAudit('notification.read', 'notification', id || 'all');
+    return json({ updated: true });
+  }
+  if (path === '/v1/search' && method === 'GET') {
+    const term = (url.searchParams.get('q') ?? '').trim().toLowerCase();
+    if (term.length < 2) return json({ items: [] });
+    const actor = currentDemoUser()!;
+    const data = readMockData();
+    const allowed = actor.partner
+      ? new Set(
+          scopedPartnerIds(
+            actor.partner.id,
+            data.partners.map((partner) => ({
+              id: partner.id,
+              path: partnerPath(partner.id, data.partners),
+            })),
+          ),
+        )
+      : null;
+    const items = [
+      ...data.partners
+        .filter(
+          (partner) =>
+            (!allowed || allowed.has(partner.id)) &&
+            `${partner.businessName} ${partner.code} ${partner.city}`.toLowerCase().includes(term),
+        )
+        .map((partner) => ({
+          type: 'Partner',
+          title: partner.businessName,
+          detail: `${partner.code} · ${partner.city}`,
+          href: actor.kind === 'admin' ? '/admin/partners' : '/partner/network',
+        })),
+      ...data.orders
+        .filter(
+          (order) =>
+            (!allowed || allowed.has(order.partnerId)) &&
+            `${order.orderNumber} ${order.customerName} ${order.status}`
+              .toLowerCase()
+              .includes(term),
+        )
+        .map((order) => ({
+          type: 'Order',
+          title: order.orderNumber,
+          detail: `${order.customerName} · ${order.status}`,
+          href: actor.kind === 'admin' ? '/admin/orders' : '/partner/orders',
+        })),
+      ...data.services
+        .filter((service) => `${service.name} ${service.category}`.toLowerCase().includes(term))
+        .map((service) => ({
+          type: 'Service',
+          title: service.name,
+          detail: service.category,
+          href: actor.kind === 'admin' ? '/admin/services' : '/partner/services',
+        })),
+    ].slice(0, 12);
+    return json({ items });
+  }
+  if (path.startsWith('/v1/admin/orders/') && path.endsWith('/assign') && method === 'POST') {
+    const id = path.split('/').at(-2) ?? '';
+    const data = readMockData();
+    const order = data.orders.find((item) => item._id === id);
+    if (!order) return json({ message: 'Order not found.' }, 404);
+    if (order.status !== 'submitted')
+      return json({ message: 'Only new orders can be assigned.' }, 409);
+    const now = new Date().toISOString();
+    updateMockData((state) => ({
+      ...state,
+      orders: state.orders.map((item) =>
+        item._id === id
+          ? {
+              ...item,
+              assignedTo: currentDemoUser()?.id ?? null,
+              status: OrderStatus.assigned,
+              updatedAt: now,
+            }
+          : item,
+      ),
+      orderEvents: [
+        {
+          _id: BigInt(Date.now()).toString(16).padStart(24, '0'),
+          orderId: id,
+          fromStatus: OrderStatus.submitted,
+          toStatus: OrderStatus.assigned,
+          note: 'Assigned to operations',
+          actorUserId: currentDemoUser()?.id ?? demoUsers.admin.id,
+          createdAt: now,
+        },
+        ...state.orderEvents,
+      ],
+    }));
+    writeAudit('order.assigned', 'order', id);
+    return json({ status: 'assigned' });
+  }
+  if (path === '/v1/admin/orders' && method === 'GET') {
+    const data = readMockData();
+    return json({
+      items: data.orders.map((order) => ({
+        ...order,
+        partnerName: data.partners.find((partner) => partner.id === order.partnerId)?.businessName,
+        serviceName: demoServices.find((service) => service._id === order.serviceId)?.name,
+      })),
+      total: data.orders.length,
+      page: 1,
+      pageSize: data.orders.length,
+    });
+  }
+  if (path === '/v1/admin/commissions' && method === 'GET')
+    return json({ items: demoCommissions, total: demoCommissions.length });
+  if (path === '/v1/admin/commissions/rules' && method === 'GET')
+    return json({ items: readMockData().commissionRules });
+  if (path === '/v1/admin/commissions/rules' && method === 'PUT') {
+    const rules = Array.isArray(body.items) ? body.items : [];
+    if (
+      rules.some(
+        (rule) =>
+          !rule ||
+          typeof rule.tier !== 'string' ||
+          !Number.isInteger(rule.basisPoints) ||
+          rule.basisPoints < 0 ||
+          rule.basisPoints > 10000,
+      )
+    )
+      return json(
+        { message: 'Commission rates must be whole basis points from 0 to 10,000.' },
+        400,
+      );
+    updateMockData((data) => ({ ...data, commissionRules: rules }));
+    writeAudit('commission.rules_updated', 'commission_rules', 'default');
+    return json({ items: rules });
+  }
+  if (path === '/v1/admin/ledger' && method === 'GET')
+    return json({ items: readMockData().ledger, total: readMockData().ledger.length });
+  if (path === '/v1/admin/payouts' && method === 'GET')
+    return json({ items: readMockData().payouts, total: readMockData().payouts.length });
+  if (path.startsWith('/v1/admin/payouts/') && path.endsWith('/paid') && method === 'POST') {
+    const id = path.split('/').at(-2) ?? '';
+    const payout = readMockData().payouts.find((item) => item._id === id);
+    if (!payout || payout.status !== 'batched')
+      return json({ message: 'Batched payout not found.' }, 409);
+    updateMockData((data) => ({
+      ...data,
+      payouts: data.payouts.map((item) =>
+        item._id === id
+          ? {
+              ...item,
+              status: 'paid' as const,
+              processedAt: new Date().toISOString(),
+              reference: String(body.reference ?? `DEMO${Date.now()}`),
+            }
+          : item,
+      ),
+    }));
+    writeAudit('payout.marked_paid', 'payout', id);
+    return json({ status: 'paid' }, 201);
+  }
+  if (path === '/v1/admin/tickets' && method === 'GET')
+    return json({ items: readMockData().tickets, total: readMockData().tickets.length });
+  if (path.startsWith('/v1/admin/tickets/') && method === 'PATCH') {
+    const id = path.split('/').at(-1) ?? '';
+    if (!['open', 'in_progress', 'waiting', 'resolved'].includes(String(body.status)))
+      return json({ message: 'Choose a valid ticket status.' }, 400);
+    updateMockData((data) => ({
+      ...data,
+      tickets: data.tickets.map((item) =>
+        item._id === id
+          ? {
+              ...item,
+              status: body.status as typeof item.status,
+              updatedAt: new Date().toISOString(),
+            }
+          : item,
+      ),
+    }));
+    writeAudit('ticket.status_changed', 'ticket', id);
+    return json({ status: body.status });
+  }
+  if (path === '/v1/admin/reports' && method === 'GET')
+    return json({ orders: readMockData().orders.length, partners: readMockData().partners.length });
+  if (path === '/v1/admin/content' && method === 'GET')
+    return json({ items: readMockData().content });
+  if (path === '/v1/admin/content' && method === 'POST') {
+    const notice = {
+      id: BigInt(Date.now()).toString(16).padStart(24, '0'),
+      title: String(body.title ?? '').slice(0, 100),
+      body: String(body.body ?? '').slice(0, 1000),
+      status: 'published',
+      createdAt: new Date().toISOString(),
+    };
+    updateMockData((data) => ({ ...data, content: [notice, ...data.content] }));
+    writeAudit('content.notice_published', 'notice', notice.id);
+    return json({ notice }, 201);
+  }
+  if (path === '/v1/admin/settings' && method === 'GET')
+    return json({ settings: readMockData().settings });
+  if (path === '/v1/admin/settings' && method === 'PUT') {
+    if (typeof body.gstin !== 'string' || !/^\d{2}[A-Z0-9]{13}$/.test(body.gstin))
+      return json({ message: 'Enter a valid 15-character GSTIN.' }, 400);
+    if (
+      !Number.isInteger(body.gstRateBps) ||
+      Number(body.gstRateBps) < 0 ||
+      Number(body.gstRateBps) > 2800
+    )
+      return json({ message: 'GST rate must be between 0 and 2,800 basis points.' }, 400);
+    const settings = {
+      gstin: body.gstin,
+      gstRateBps: Number(body.gstRateBps),
+      intraState: Boolean(body.intraState),
+      invoicePrefix: String(body.invoicePrefix ?? 'SN').slice(0, 8),
+    };
+    updateMockData((data) => ({ ...data, settings }));
+    writeAudit('settings.updated', 'settings', 'portal');
+    return json({ settings });
+  }
+  if (path === '/v1/services' && method === 'GET') return json({ items: readMockData().services });
+  if (path.startsWith('/v1/admin/services/') && method === 'PATCH') {
+    const id = path.split('/').at(-1) ?? '';
+    if (
+      !Number.isSafeInteger(body.basePricePaise) ||
+      Number(body.basePricePaise) < 0 ||
+      !Number.isInteger(body.gstRateBps) ||
+      Number(body.gstRateBps) < 0 ||
+      Number(body.gstRateBps) > 2800
+    )
+      return json({ message: 'Enter a valid price in paise and GST rate.' }, 400);
+    updateMockData((data) => ({
+      ...data,
+      services: data.services.map((item) =>
+        item._id === id
+          ? {
+              ...item,
+              basePricePaise: Number(body.basePricePaise),
+              gstRateBps: Number(body.gstRateBps),
+              updatedAt: new Date().toISOString(),
+            }
+          : item,
+      ),
+    }));
+    writeAudit('service.pricing_updated', 'service', id);
+    return json({ updated: true });
+  }
   if (path === '/v1/orders' && method === 'GET') {
     const actor = currentDemoUser()!;
     const paramsPartner = url.searchParams.get('partnerId');
@@ -569,6 +841,28 @@ export async function mockApiFetch(
     writeAudit('order.status_changed', 'order', id);
     return json({ order: { ...current, status: nextStatus, updatedAt: now } }, 200);
   }
+  if (path.startsWith('/v1/orders/') && path.endsWith('/documents') && method === 'POST') {
+    const id = path.split('/').at(-2) ?? '';
+    const file = init.body instanceof FormData ? init.body.get('file') : null;
+    if (!file || typeof file === 'string')
+      return json({ message: 'Choose a document to attach.' }, 400);
+    if (file.size > 10 * 1024 * 1024)
+      return json({ message: 'Order documents must be 10 MB or smaller.' }, 413);
+    if (!['application/pdf', 'image/jpeg', 'image/png'].includes(file.type))
+      return json({ message: 'Use a PDF, JPEG, or PNG document.' }, 415);
+    const attachment = {
+      id: BigInt(Date.now()).toString(16).padStart(24, '0'),
+      orderId: id,
+      name: file.name,
+      contentType: file.type,
+      sizeBytes: file.size,
+      visibility: 'private' as const,
+      createdAt: new Date().toISOString(),
+    };
+    updateMockData((data) => ({ ...data, orderDocuments: [attachment, ...data.orderDocuments] }));
+    writeAudit('order.document_attached', 'order', id);
+    return json({ attachment }, 201);
+  }
   if (path === '/v1/partner/wallet' && method === 'GET') {
     const partnerId = currentDemoUser()?.partner?.id;
     const wallet = readMockData().wallets.find((item) => item.partnerId === partnerId);
@@ -620,7 +914,7 @@ export async function mockApiFetch(
   }
   if (path === '/v1/partner/customers' && method === 'GET') {
     const partnerId = currentDemoUser()?.partner?.id;
-    const items = demoCustomers.filter(
+    const items = readMockData().customers.filter(
       (customer) =>
         customer.partnerId === partnerId ||
         partnerPath(customer.partnerId, readMockData().partners).includes(partnerId ?? ''),
@@ -628,7 +922,11 @@ export async function mockApiFetch(
     return json({ items, total: items.length, page: 1, pageSize: 50 });
   }
   if (path === '/v1/admin/wallet/topups' && method === 'GET') {
-    const items = readMockData().topups;
+    const data = readMockData();
+    const items = data.topups.map((topup) => ({
+      ...topup,
+      partnerName: data.partners.find((partner) => partner.id === topup.partnerId)?.businessName,
+    }));
     return json({ items, total: items.length, page: 1, pageSize: 100 });
   }
   if (path.startsWith('/v1/admin/wallet/topups/') && method === 'POST') {
@@ -704,10 +1002,49 @@ export async function mockApiFetch(
       page: 1,
       pageSize: 200,
     });
-  if (path === '/v1/files/kyc/mine')
+  if (path === '/v1/files/kyc/mine') {
+    const ownerId = currentDemoUser()?.partner?.id;
     return json(
-      demoDocuments.map((doc) => ({ ...doc, id: doc.id, createdAt: '2026-11-20T10:00:00.000Z' })),
+      readMockData().kycDocuments.filter(
+        (doc) => doc.ownerType === 'partner' && doc.ownerId === ownerId,
+      ),
     );
+  }
+  if (path === '/v1/files/kyc' && method === 'POST') {
+    const form = init.body instanceof FormData ? init.body : null;
+    const file = form?.get('file');
+    const ownerId = String(form?.get('ownerId') ?? '');
+    const docType = String(form?.get('docType') ?? '');
+    const actor = currentDemoUser();
+    if (!actor?.partner || ownerId !== actor.partner.id)
+      return json({ message: 'You can only upload documents for your own partner profile.' }, 403);
+    if (!file || typeof file === 'string') return json({ message: 'Choose a document.' }, 400);
+    if (file.size > 10 * 1024 * 1024)
+      return json({ message: 'Documents must be 10 MiB or smaller.' }, 413);
+    if (!['application/pdf', 'image/jpeg', 'image/png'].includes(file.type))
+      return json({ message: 'Use a PDF, JPEG, or PNG document.' }, 415);
+    if (
+      !['pan_card', 'gst_certificate', 'identity_proof', 'address_proof', 'bank_proof'].includes(
+        docType,
+      )
+    )
+      return json({ message: 'Choose a supported KYC document type.' }, 400);
+    const document: MockKycDocument = {
+      id: BigInt(Date.now()).toString(16).padStart(24, '0'),
+      ownerType: 'partner',
+      ownerId,
+      docType,
+      contentType: file.type,
+      sizeBytes: file.size,
+      status: 'pending',
+      objectKey: `private/demo/${actor.partner.id}/${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      expiresAt: null,
+    };
+    updateMockData((data) => ({ ...data, kycDocuments: [document, ...data.kycDocuments] }));
+    writeAudit('kyc.document_uploaded', 'kyc_document', document.id);
+    return json({ accepted: true, documentId: document.id }, 201);
+  }
   if (path === '/v1/partner/network') {
     const actor = currentDemoUser();
     const root = actor?.partner?.id;
@@ -735,11 +1072,225 @@ export async function mockApiFetch(
       items,
     });
   }
-  if (path.startsWith('/v1/files/kyc/'))
-    return new Response('%PDF-1.7\nDemo KYC document\n%%EOF', {
-      status: 200,
-      headers: { 'content-type': 'application/pdf' },
+  if (path === '/v1/partner/notices' && method === 'GET')
+    return json({ items: readMockData().content.filter((item) => item.status === 'published') });
+  if (path === '/v1/partner/invites' && method === 'POST') {
+    const partner = currentDemoUser()?.partner;
+    if (!partner) return json({ message: 'A partner account is required to invite.' }, 403);
+    const expectedTier = partner.tier === 'master_distributor' ? 'distributor' : 'retailer';
+    if (body.tier !== expectedTier)
+      return json({ message: 'You can invite only the next tier in your network.' }, 403);
+    if (
+      ![body.businessName, body.ownerName, body.email, body.mobile].every(
+        (value) => typeof value === 'string' && value.trim(),
+      )
+    )
+      return json({ message: 'Complete all partner invitation details.' }, 400);
+    const id = BigInt(Date.now()).toString(16).padStart(24, '0');
+    const application: (typeof demoApplications)[number] = {
+      id,
+      applicantName: String(body.ownerName).trim(),
+      email: String(body.email).trim().toLowerCase(),
+      businessName: String(body.businessName).trim(),
+      requestedTier: expectedTier as (typeof demoApplications)[number]['requestedTier'],
+      status: 'pending_email_verification',
+      receivedAt: new Date().toISOString(),
+    };
+    updateMockData((data) => ({ ...data, applications: [application, ...data.applications] }));
+    writeAudit('partner.invite_created', 'application', id);
+    return json({ applicationId: id, verificationToken: `invite-${id}` }, 201);
+  }
+  if (path === '/v1/partner/team' && method === 'GET') {
+    const partnerId = currentDemoUser()?.partner?.id;
+    return json({
+      items: readMockData().partnerUsers.filter((member) => member.partnerId === partnerId),
     });
+  }
+  if (path === '/v1/partner/team' && method === 'POST') {
+    const actor = currentDemoUser();
+    const partnerId = actor?.partner?.id;
+    const email = String(body.email ?? '')
+      .trim()
+      .toLowerCase();
+    const name = String(body.name ?? '').trim();
+    const requested = Array.isArray(body.staffPermissions) ? body.staffPermissions.map(String) : [];
+    const allowed = new Set([
+      'orders.read',
+      'orders.create',
+      'wallet.read',
+      'wallet.topup_request',
+      'customers.read',
+      'customers.manage',
+      'tickets.read',
+      'tickets.manage',
+      'services.read',
+      'files.upload',
+      'files.download',
+    ]);
+    if (
+      !partnerId ||
+      !email.includes('@') ||
+      name.length < 2 ||
+      !requested.length ||
+      requested.some(
+        (permission) => !allowed.has(permission) || !actor.permissions.includes(permission),
+      )
+    )
+      return json({ message: 'Enter a valid staff name, email, and permission subset.' }, 400);
+    if (
+      readMockData().partnerUsers.some(
+        (member) => member.partnerId === partnerId && member.email === email,
+      )
+    )
+      return json({ message: 'This email already has a team invitation.' }, 409);
+    const id = BigInt(Date.now()).toString(16).padStart(24, '0');
+    const now = new Date().toISOString();
+    const member: MockPartnerUser = {
+      _id: id,
+      partnerId,
+      userId: BigInt(Date.now() + 1)
+        .toString(16)
+        .padStart(24, '0'),
+      role: 'staff' as const,
+      staffPermissions: requested,
+      status: 'disabled' as const,
+      name,
+      email,
+      createdAt: now,
+      updatedAt: now,
+      inviteToken: `staff-${id}`,
+    };
+    updateMockData((data) => ({ ...data, partnerUsers: [member, ...data.partnerUsers] }));
+    writeAudit('partner.staff_invited', 'partner_user', id);
+    return json({ member, invitationToken: member.inviteToken }, 201);
+  }
+  if (path.startsWith('/v1/partner/team/') && method === 'PATCH') {
+    const id = path.split('/').at(-1) ?? '';
+    const partnerId = currentDemoUser()?.partner?.id;
+    const member = readMockData().partnerUsers.find(
+      (item) => item._id === id && item.partnerId === partnerId,
+    );
+    if (!member || member.role === 'owner') return json({ message: 'Team member not found.' }, 404);
+    if (body.status !== 'active' && body.status !== 'disabled')
+      return json({ message: 'Choose active or disabled.' }, 400);
+    updateMockData((data) => ({
+      ...data,
+      partnerUsers: data.partnerUsers.map((item) =>
+        item._id === id
+          ? {
+              ...item,
+              status: body.status as 'active' | 'disabled',
+              updatedAt: new Date().toISOString(),
+            }
+          : item,
+      ),
+    }));
+    writeAudit(`partner.staff_${String(body.status)}`, 'partner_user', id);
+    return json({ status: body.status });
+  }
+  if (path === '/v1/partner/customers' && method === 'POST') {
+    if (body.consent !== true)
+      return json({ message: 'Record customer consent before saving.' }, 400);
+    const actor = currentDemoUser();
+    if (!actor?.partner) return json({ message: 'Partner profile not found.' }, 403);
+    const fullName = String(body.fullName ?? '').trim();
+    const mobile = String(body.mobile ?? '').replaceAll(' ', '');
+    if (fullName.length < 2 || !/^\+?[0-9]{10,15}$/.test(mobile))
+      return json({ message: 'Enter a valid customer name and mobile number.' }, 400);
+    const now = new Date().toISOString();
+    const customer = {
+      _id: BigInt(Date.now()).toString(16).padStart(24, '0'),
+      partnerId: actor.partner.id,
+      fullName,
+      mobile,
+      email: String(body.email ?? ''),
+      consentAt: now,
+      createdAt: now,
+      updatedAt: now,
+    };
+    updateMockData((data) => ({ ...data, customers: [customer, ...data.customers] }));
+    writeAudit('customer.created', 'customer', customer._id);
+    return json({ customer }, 201);
+  }
+  if (path === '/v1/partner/tickets' && method === 'POST') {
+    const actor = currentDemoUser();
+    if (!actor?.partner) return json({ message: 'Partner profile not found.' }, 403);
+    const subject = String(body.subject ?? '').trim();
+    if (subject.length < 3 || !String(body.message ?? '').trim())
+      return json({ message: 'Add a subject and ticket details.' }, 400);
+    const now = new Date().toISOString();
+    const ticket = {
+      _id: BigInt(Date.now()).toString(16).padStart(24, '0'),
+      partnerId: actor.partner.id,
+      ticketNumber: `TKT-26-${Date.now().toString().slice(-5)}`,
+      subject,
+      category: String(body.category ?? 'technical'),
+      status: 'open' as const,
+      priority: 'normal' as const,
+      createdAt: now,
+      updatedAt: now,
+    };
+    updateMockData((data) => ({ ...data, tickets: [ticket, ...data.tickets] }));
+    writeAudit('ticket.created', 'ticket', ticket._id);
+    return json({ ticket }, 201);
+  }
+  if (path.startsWith('/v1/orders/') && path.endsWith('/query') && method === 'POST') {
+    const id = path.split('/').at(-2) ?? '';
+    const data = readMockData();
+    const order = data.orders.find((item) => item._id === id);
+    const actor = currentDemoUser();
+    if (
+      !order ||
+      !actor?.partner ||
+      !scopedPartnerIds(
+        actor.partner.id,
+        data.partners.map((partner) => ({
+          id: partner.id,
+          path: partnerPath(partner.id, data.partners),
+        })),
+      ).includes(order.partnerId)
+    )
+      return json({ message: 'Order not found.' }, 404);
+    if (order.status !== 'query')
+      return json({ message: 'This order does not have an open query.' }, 409);
+    const response = String(body.response ?? '').trim();
+    if (!response) return json({ message: 'Enter a response.' }, 400);
+    const event = {
+      _id: BigInt(Date.now()).toString(16).padStart(24, '0'),
+      orderId: id,
+      fromStatus: 'query',
+      toStatus: 'query',
+      note: `Partner response: ${response}`,
+      actorUserId: actor.id,
+      createdAt: new Date().toISOString(),
+    };
+    updateMockData((state) => ({ ...state, orderEvents: [event, ...state.orderEvents] }));
+    writeAudit('order.query_answered', 'order', id);
+    return json({ accepted: true }, 201);
+  }
+  if (path.startsWith('/v1/files/kyc/')) {
+    const id = path.split('/').at(-1) ?? '';
+    const document = readMockData().kycDocuments.find((item) => item.id === id);
+    const actor = currentDemoUser();
+    if (!document) return json({ message: 'Document not found.' }, 404);
+    if (
+      actor?.partner &&
+      document.ownerId !== actor.partner.id &&
+      !scopedPartnerIds(
+        actor.partner.id,
+        readMockData().partners.map((partner) => ({
+          id: partner.id,
+          path: partnerPath(partner.id, readMockData().partners),
+        })),
+      ).includes(document.ownerId)
+    )
+      return json({ message: 'Document not found.' }, 404);
+    writeAudit('kyc.document_viewed', 'kyc_document', id);
+    return new Response('%PDF-1.7\nPrivate mock KYC document\n%%EOF', {
+      status: 200,
+      headers: { 'content-type': 'application/pdf', 'cache-control': 'private, no-store' },
+    });
+  }
   return json({ message: 'This action is not available in the local demo.' }, 404);
 }
 
@@ -752,13 +1303,39 @@ export function resetMockSession(): void {
 }
 
 type MockData = ReturnType<typeof initialMockData>;
+type MockPartnerUser = {
+  _id: string;
+  partnerId: string;
+  userId: string;
+  role: 'owner' | 'staff';
+  staffPermissions: string[];
+  status: 'active' | 'disabled';
+  name: string;
+  email: string;
+  createdAt: string;
+  updatedAt: string;
+  inviteToken?: string;
+};
+type MockKycDocument = {
+  id: string;
+  ownerType: 'partner' | 'application';
+  ownerId: string;
+  docType: string;
+  objectKey: string;
+  contentType: string;
+  sizeBytes: number;
+  status: string;
+  expiresAt: string | null;
+  createdAt: string;
+};
 function readMockData(): MockData {
   if (typeof window === 'undefined') return initialMockData();
   try {
     const raw = window.localStorage.getItem(dataKey);
     if (raw) {
       const stored = JSON.parse(raw) as MockData;
-      if (stored.orders && stored.wallets && stored.ledger && stored.topups) return stored;
+      if (stored.orders && stored.wallets && stored.ledger && stored.topups)
+        return { ...initialMockData(), ...stored };
     }
   } catch {
     /* malformed local demo data is reset to a clean seed */
@@ -781,6 +1358,63 @@ function initialMockData() {
     notifications: demoNotifications,
     topups: demoTopups,
     customers: demoCustomers,
+    content: [
+      {
+        id: '64a900000000000000000001',
+        title: 'Welcome to the partner network',
+        body: 'Your local service desk is ready for new customer requests.',
+        status: 'published',
+        createdAt: '2026-11-20T10:00:00.000Z',
+      },
+      {
+        id: '64a900000000000000000002',
+        title: 'November settlement window',
+        body: 'Submit eligible payout requests before the monthly review closes.',
+        status: 'published',
+        createdAt: '2026-11-18T10:00:00.000Z',
+      },
+    ],
+    settings: { gstin: '27AABCS1234F1Z5', gstRateBps: 1800, intraState: true, invoicePrefix: 'SN' },
+    commissionRules: [
+      { tier: 'master_distributor', basisPoints: 600 },
+      { tier: 'distributor', basisPoints: 350 },
+      { tier: 'retailer', basisPoints: 200 },
+    ],
+    orderDocuments: [] as Array<{
+      id: string;
+      orderId: string;
+      name: string;
+      contentType: string;
+      sizeBytes: number;
+      visibility: 'private';
+      createdAt: string;
+    }>,
+    partnerUsers: [
+      {
+        _id: '64ab00000000000000000001',
+        partnerId: demoUsers.partner.partner!.id,
+        userId: demoUsers.partner.id,
+        role: 'owner' as const,
+        staffPermissions: demoUsers.partner.permissions,
+        status: 'active' as const,
+        name: demoUsers.partner.name,
+        email: demoUsers.partner.email,
+        createdAt: '2026-11-01T10:00:00.000Z',
+        updatedAt: '2026-11-20T10:00:00.000Z',
+      },
+    ] as MockPartnerUser[],
+    kycDocuments: demoDocuments.map((doc) => ({
+      id: doc.id,
+      ownerType: 'partner',
+      ownerId: demoUsers.partner.partner!.id,
+      docType: doc.docType,
+      objectKey: `private/demo/${doc.id}`,
+      contentType: doc.contentType,
+      sizeBytes: doc.sizeBytes,
+      status: doc.status,
+      expiresAt: doc.expiresAt ?? null,
+      createdAt: '2026-11-20T10:00:00.000Z',
+    })) as MockKycDocument[],
   };
 }
 function updateMockData(transform: (current: MockData) => MockData): void {

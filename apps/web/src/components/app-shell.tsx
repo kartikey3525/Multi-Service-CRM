@@ -2,6 +2,8 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { PortalNavigation } from './portal-navigation';
 import { DemoModeToggle } from './demo-mode-toggle';
+import { AdminAccountMenu } from './admin-account-menu';
+import { PortalTools } from './portal-tools';
 import { brand } from '../lib/brand';
 import messages from '../messages/en.json';
 
@@ -73,7 +75,9 @@ export function PortalShell({
             <Link className="header-login" href="/">
               {messages.shell.publicSite}
             </Link>
+            <PortalTools />
             <DemoModeToggle />
+            {kind === 'admin' ? <AdminAccountMenu /> : null}
           </div>
         </div>
       </header>
