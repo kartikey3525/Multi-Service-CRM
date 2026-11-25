@@ -29,9 +29,11 @@ e2e:
 	pnpm e2e
 
 migrate:
+	docker compose --env-file .env.example build migrator
 	docker compose --env-file .env.example --profile migration run --rm --no-deps migrator
 
 migrate-dev:
+	docker compose --env-file .env.example -f docker-compose.yml -f docker-compose.dev.yml build migrator
 	docker compose --env-file .env.example -f docker-compose.yml -f docker-compose.dev.yml --profile migration run --rm --no-deps migrator
 
 seed:

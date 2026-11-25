@@ -30,8 +30,15 @@ test(
     const databaseName = `crm_test_${randomUUID().replaceAll('-', '')}`;
     const immutableDatabaseName = `${databaseName}_immutable`;
     process.env.MONGODB_IMMUTABLE_DATABASE = immutableDatabaseName;
-    const [{ AppModule }, { AuditModel, EmailOutboxModel, RoleModel, UserModel }] =
-      await Promise.all([import('../src/app.module'), import('../src/modules/identity/models')]);
+    const [
+      { AppModule },
+      { AuditModel, EmailOutboxModel, RoleModel, UserModel },
+      { ApplicationModel, PartnerModel, PartnerUserModel, TerritoryModel },
+    ] = await Promise.all([
+      import('../src/app.module'),
+      import('../src/modules/identity/models'),
+      import('../src/modules/partners/models'),
+    ]);
     parsedUri.pathname = `/${databaseName}`;
 
     assert.match(databaseName, /^crm_test_/);
@@ -50,6 +57,62 @@ test(
       const healthy = await request(app.getHttpServer()).get('/api/health').expect(200);
       assert.deepEqual(healthy.body, { status: 'ok' });
       assert.match(String(healthy.headers['x-request-id']), /^[0-9a-f-]{36}$/i);
+
+      await TerritoryModel.create({
+        key: `test-${randomUUID()}`,
+        name: 'Integration territory',
+        state: 'Delhi',
+        pinPrefixes: ['11'],
+        exclusive: false,
+        active: true,
+      });
+      const available = await request(app.getHttpServer())
+        .get('/api/v1/public/territories/availability?state=Delhi&pin=110001')
+        .expect(200);
+      assert.equal(available.body.available, true);
+
+      const applicationEmail = `application-${randomUUID()}@example.test`;
+      const applicationCsrf = await request(app.getHttpServer())
+        .get('/api/v1/auth/csrf')
+        .expect(200);
+      const applicationCookies = cookiePair(applicationCsrf.headers['set-cookie'], 'csrf_token');
+      const submittedApplication = await request(app.getHttpServer())
+        .post('/api/v1/public/applications')
+        .set('Cookie', applicationCookies)
+        .set('X-CSRF-Token', applicationCsrf.body.csrfToken as string)
+        .send({
+          applicantName: 'Integration Applicant',
+          email: applicationEmail,
+          mobile: '+919876543210',
+          businessName: 'Integration Services',
+          legalType: 'Sole proprietorship',
+          city: 'New Delhi',
+          state: 'Delhi',
+          pin: '110001',
+          requestedTier: 'master_distributor',
+        })
+        .expect(201);
+      assert.equal(submittedApplication.body.verificationRequired, true);
+      const verificationEmail = await EmailOutboxModel.findOne({
+        to: applicationEmail,
+        template: 'application_verify',
+      }).lean();
+      assert.ok(verificationEmail);
+      const emailVariables =
+        verificationEmail.variables instanceof Map
+          ? Object.fromEntries(verificationEmail.variables)
+          : verificationEmail.variables;
+      const verificationToken = new URL(emailVariables.verificationUrl).searchParams.get('token');
+      assert.ok(verificationToken);
+      await request(app.getHttpServer())
+        .get(
+          `/api/v1/public/applications/verify-email?token=${encodeURIComponent(verificationToken)}`,
+        )
+        .expect(200, { verified: true });
+      assert.equal(
+        (await ApplicationModel.findOne({ email: applicationEmail }).lean())?.status,
+        'submitted',
+      );
 
       const retailer = await RoleModel.findOne({ key: 'retailer', kind: 'partner' });
       const superAdmin = await RoleModel.findOne({ key: 'super_admin', kind: 'admin' });
@@ -123,6 +186,65 @@ test(
         .expect(200);
       assert.equal(audit.body.total, 1);
 
+      const applicationQueue = await request(app.getHttpServer())
+        .get('/api/v1/admin/applications?status=submitted')
+        .set('Cookie', adminCookies)
+        .expect(200);
+      const queuedApplication = applicationQueue.body.items.find(
+        (item: { email: string }) => item.email === applicationEmail,
+      );
+      assert.ok(queuedApplication);
+      const applicationApproval = await request(app.getHttpServer())
+        .post(`/api/v1/admin/applications/${queuedApplication._id}/approve`)
+        .set('Cookie', adminCookies)
+        .set('X-CSRF-Token', adminCsrf)
+        .send({})
+        .expect(201);
+      assert.equal(applicationApproval.body.status, 'pending_payment');
+      const createdPartner = await PartnerModel.findOne({ email: applicationEmail }).lean();
+      assert.ok(createdPartner);
+      assert.equal(createdPartner.tier, 'master_distributor');
+      assert.deepEqual(createdPartner.path.map(String), [String(createdPartner._id)]);
+      assert.ok(await PartnerUserModel.exists({ partnerId: createdPartner._id, role: 'owner' }));
+
+      await PartnerModel.updateOne({ _id: createdPartner._id }, { $set: { status: 'active' } });
+      const childEmail = `child-${randomUUID()}@example.test`;
+      const childApplication = await ApplicationModel.create({
+        applicantName: 'Integration Distributor',
+        email: childEmail,
+        mobile: '+919876543211',
+        businessName: 'Integration Distributor Business',
+        legalType: 'Sole proprietorship',
+        city: 'New Delhi',
+        state: 'Delhi',
+        pin: '110001',
+        requestedTier: 'distributor',
+        emailVerificationTokenHash: randomUUID(),
+        emailVerificationExpiresAt: new Date(Date.now() + 60_000),
+        emailVerifiedAt: new Date(),
+        status: 'submitted',
+      });
+      await request(app.getHttpServer())
+        .post(`/api/v1/admin/applications/${String(childApplication._id)}/approve`)
+        .set('Cookie', adminCookies)
+        .set('X-CSRF-Token', adminCsrf)
+        .send({})
+        .expect(400);
+      const childApproval = await request(app.getHttpServer())
+        .post(`/api/v1/admin/applications/${String(childApplication._id)}/approve`)
+        .set('Cookie', adminCookies)
+        .set('X-CSRF-Token', adminCsrf)
+        .send({ parentId: String(createdPartner._id) });
+      assert.equal(childApproval.status, 201, JSON.stringify(childApproval.body));
+      assert.equal(childApproval.body.status, 'pending_payment');
+      const childPartner = await PartnerModel.findOne({ email: childEmail }).lean();
+      assert.ok(childPartner);
+      assert.equal(String(childPartner.parentId), String(createdPartner._id));
+      assert.deepEqual(childPartner.path.map(String), [
+        String(createdPartner._id),
+        String(childPartner._id),
+      ]);
+
       await request(app.getHttpServer())
         .post('/api/v1/auth/logout')
         .set('Cookie', adminCookies)
@@ -144,6 +266,30 @@ test(
         totpEnabled: false,
         failedLogins: 0,
       });
+      const partnerRecordId = new mongoose.Types.ObjectId();
+      await PartnerModel.create({
+        _id: partnerRecordId,
+        code: `PAR-${partnerRecordId.toHexString().slice(-10).toUpperCase()}`,
+        path: [partnerRecordId],
+        tier: 'retailer',
+        status: 'active',
+        applicationId: new mongoose.Types.ObjectId(),
+        ownerUserId: partner._id,
+        businessName: 'Test Partner Business',
+        legalType: 'Sole proprietorship',
+        mobile: '+919876543212',
+        email: partner.email,
+        city: 'New Delhi',
+        state: 'Delhi',
+        pin: '110001',
+      });
+      await PartnerUserModel.create({
+        partnerId: partnerRecordId,
+        userId: partner._id,
+        role: 'owner',
+        staffPermissions: [],
+        status: 'active',
+      });
       const partnerCsrf = await request(app.getHttpServer()).get('/api/v1/auth/csrf').expect(200);
       const partnerLogin = await request(app.getHttpServer())
         .post('/api/v1/auth/login')
@@ -159,6 +305,46 @@ test(
         .get('/api/v1/auth/me')
         .set('Cookie', partnerCookies)
         .expect(200);
+      const downlineRecordId = new mongoose.Types.ObjectId();
+      await PartnerModel.create({
+        _id: downlineRecordId,
+        code: `PAR-${downlineRecordId.toHexString().slice(-10).toUpperCase()}`,
+        parentId: partnerRecordId,
+        path: [partnerRecordId, downlineRecordId],
+        tier: 'retailer',
+        status: 'active',
+        applicationId: new mongoose.Types.ObjectId(),
+        ownerUserId: new mongoose.Types.ObjectId(),
+        businessName: 'Partner Downline Business',
+        legalType: 'Sole proprietorship',
+        mobile: '+919876543213',
+        email: `downline-${randomUUID()}@example.test`,
+        city: 'New Delhi',
+        state: 'Delhi',
+        pin: '110001',
+      });
+      const actorPartnerIds = (
+        await PartnerModel.distinct('_id', { path: partnerRecordId, status: { $ne: 'closed' } })
+      ).map(String);
+      const scopedPartners = await PartnerModel.find(
+        scopeToActor(
+          {
+            userId: String(partner._id),
+            kind: 'partner',
+            roleKeys: [],
+            permissions: new Set(),
+            partnerPath: actorPartnerIds,
+          },
+          {},
+          '_id',
+        ),
+      )
+        .select('_id')
+        .lean();
+      assert.deepEqual(
+        new Set(scopedPartners.map((row) => String(row._id))),
+        new Set([String(partnerRecordId), String(downlineRecordId)]),
+      );
       await request(app.getHttpServer())
         .get('/api/v1/admin/users')
         .set('Cookie', partnerCookies)

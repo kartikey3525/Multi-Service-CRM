@@ -10,6 +10,7 @@ type UserAccess = { permissions: string[] };
 const links = {
   admin: [
     { href: '/admin', label: 'Home', permission: 'identity.me' },
+    { href: '/admin/applications', label: 'Applications', permission: 'applications.read' },
     { href: '/admin/users', label: 'Users', permission: 'admin_users.read' },
     { href: '/admin/audit', label: 'Audit log', permission: 'audit.read' },
   ],

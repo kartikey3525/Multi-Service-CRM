@@ -5,6 +5,45 @@ test('public site renders the franchise landing page', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1 })).toContainText('local service business');
 });
 
+test('partner application checks availability and submits for email verification', async ({
+  page,
+}) => {
+  await page.route('**/api/v1/public/territories/availability**', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ available: true }),
+    }),
+  );
+  await page.route('**/api/v1/auth/csrf', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ csrfToken: 'csrf-test-token' }),
+    }),
+  );
+  await page.route('**/api/v1/public/applications', (route) =>
+    route.fulfill({
+      status: 201,
+      contentType: 'application/json',
+      body: JSON.stringify({ accepted: true, verificationRequired: true }),
+    }),
+  );
+  await page.goto('/apply');
+  await page.getByLabel('Your full name').fill('Applicant Test');
+  await page.getByLabel('Email address').fill('applicant@example.test');
+  await page.getByLabel('Mobile number').fill('+919876543210');
+  await page.getByLabel('Business name').fill('Test Services');
+  await page.getByLabel('Business legal type').fill('Sole proprietorship');
+  await page.getByLabel('City').fill('New Delhi');
+  await page.getByLabel('State').fill('Delhi');
+  await page.getByLabel('Six-digit PIN code').fill('110001');
+  await page.getByRole('button', { name: 'Check territory availability' }).click();
+  await expect(page.getByRole('status')).toContainText('Applications are available');
+  await page.getByRole('button', { name: 'Submit application' }).click();
+  await expect(page.getByRole('status')).toContainText('Check your email');
+});
+
 test('API health is reachable through the local proxy', async ({ request }) => {
   const response = await request.get('/api/health');
   expect(response.status()).toBe(200);

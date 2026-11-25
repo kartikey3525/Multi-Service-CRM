@@ -12,6 +12,7 @@ import { RoleModel, UserModel, type IdentityKind } from './models';
 import type { Actor } from '../../common/actor';
 import { ALLOW_PREAUTH, PUBLIC_ROUTE, REQUIRED_PERMISSION } from './identity.decorator';
 import { SessionService } from './session.service';
+import { PartnerModel, PartnerUserModel } from '../partners/models';
 
 export type RequestActor = Actor;
 
@@ -69,12 +70,31 @@ export class PermissionGuard implements CanActivate {
       await this.sessions.assertCsrf(request, session);
     }
 
-    request.actor = {
+    const actor: RequestActor = {
       userId: String(user._id),
       kind: user.kind,
       permissions,
       roleKeys: roles.map((role) => role.key),
     };
+    if (user.kind === 'partner') {
+      const membership = await PartnerUserModel.findOne({ userId: user._id, status: 'active' })
+        .select('partnerId')
+        .lean();
+      const partner = membership
+        ? await PartnerModel.findOne({ _id: membership.partnerId, status: { $ne: 'closed' } })
+            .select('_id path')
+            .lean()
+        : null;
+      if (!partner || !partner.path.length)
+        throw new ForbiddenException('An active partner membership is required.');
+      actor.partnerPath = (
+        await PartnerModel.distinct('_id', {
+          path: partner._id,
+          status: { $ne: 'closed' },
+        })
+      ).map(String);
+    }
+    request.actor = actor;
     request.authSession = session;
     return true;
   }

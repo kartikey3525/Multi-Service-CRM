@@ -5,7 +5,7 @@ export interface Actor {
   kind: IdentityKind;
   roleKeys: string[];
   permissions: Set<string>;
-  /** Set by the partner hierarchy resolver when M2 models exist. */
+  /** Partner IDs in this actor's own subtree, resolved from the Mongo materialized path. */
   partnerPath?: string[];
 }
 

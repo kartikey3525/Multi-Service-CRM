@@ -112,3 +112,14 @@ Health GET /health
 - Admin user and role reads/writes live under `/api/v1/admin/users` and `/api/v1/admin/roles`; audit reads are `GET /api/v1/admin/audit` with actor, entity, action, date, and pagination filters.
 
 All non-public routes require an explicit permission decorator. The global guard validates account kind, role permissions, session state, and CSRF on state-changing calls. Partner scopes fail closed until M2 resolves the partner hierarchy.
+
+## M2 partner applications (implemented subset)
+
+- `GET /v1/public/territories?state=` lists active application territories.
+- `GET /v1/public/territories/availability?state=&pin=` checks active territory coverage and exclusive assignment.
+- `POST /v1/public/applications` is CSRF protected and rate limited by IP and email; it creates an email-verification outbox item.
+- `GET /v1/public/applications/verify-email?token=` consumes a hashed, expiring verification token.
+- `GET /v1/admin/applications?status=&page=&pageSize=&q=`, `GET /v1/admin/applications/eligible-parents?tier=`, and `GET /v1/admin/applications/:id` require `applications.read`.
+- `POST /v1/admin/applications/:id/approve`, `/reject`, and `/request-info` require `applications.review` and CSRF. Decisions write audit and email-outbox records transactionally. Approval creates a pending-payment partner and invite; distributor and retailer applications require the active parent ID.
+
+The implemented reviewer currently displays KYC metadata only. Upload/presigned URL, private document viewing, invite applications, partner management/network/profile, suspension, and encryption APIs are pending M2.

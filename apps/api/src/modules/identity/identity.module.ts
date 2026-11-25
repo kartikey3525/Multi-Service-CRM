@@ -21,7 +21,7 @@ import { SessionService } from './session.service';
     PermissionGuard,
     { provide: APP_GUARD, useClass: PermissionGuard },
   ],
-  exports: [AuditService, SessionService],
+  exports: [AuditService, SessionService, RateLimitService],
 })
 export class IdentityModule implements OnModuleInit {
   constructor(@Inject(AuthService) private readonly auth: AuthService) {}

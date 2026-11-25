@@ -3,9 +3,10 @@ import { HealthController } from './health.controller';
 import { StructuredLoggerMiddleware } from './common/structured-logger.middleware';
 import { DatabaseLifecycle } from './database';
 import { IdentityModule } from './modules/identity/identity.module';
+import { PartnersModule } from './modules/partners/partners.module';
 
 @Module({
-  imports: [IdentityModule],
+  imports: [IdentityModule, PartnersModule],
   controllers: [HealthController],
   providers: [StructuredLoggerMiddleware, DatabaseLifecycle],
 })

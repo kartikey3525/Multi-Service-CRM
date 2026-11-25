@@ -19,6 +19,18 @@ function renderEmail(
       text: `A password reset was requested for your account. Use this link within one hour:\n\n${resetUrl}\n\nIf you did not request this, you can ignore this message.`,
     };
   }
+  if (template === 'application_verify') {
+    return {
+      subject: 'Verify your partner application email',
+      text: `Hello ${variables.applicantName ?? 'there'},\n\nVerify your email to submit your partner application:\n\n${variables.verificationUrl ?? ''}\n\nThis link expires in 24 hours. If you did not start this application, you can ignore this message.`,
+    };
+  }
+  if (template === 'application_status') {
+    return {
+      subject: 'Update about your partner application',
+      text: `Hello ${variables.applicantName ?? 'there'},\n\nYour application status is ${variables.status ?? 'updated'}.\n\n${variables.reason ?? ''}\n\nReply to this email if you need help.`,
+    };
+  }
   throw new Error(`Unsupported email template: ${template}`);
 }
 
