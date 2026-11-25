@@ -8,7 +8,7 @@
    Each row below is a Mongoose collection. Every document also has _id (ObjectId),
    createdAt and updatedAt , left out below. Money fields end in _paise and hold integer
    paise. Fields ending in _enc are encrypted with FIELD_ENCRYPTION_KEY . A reference to
-   another collection is an ObjectId field; "jsonb" in the listings means a nested object.
+   another collection is an ObjectId field; parenthesized nested objects are BSON documents.
    Codex writes camelCase field names in code (for example balancePaise ) and turns this
    section into Mongoose models and migrate-mongo scripts in the milestone named in
    each heading.
@@ -35,7 +35,7 @@
    Logging Structured JSON, request id on every line, no
    personal data in logs
    Text No hard-coded user-facing strings in components;
-   use messages/en.json
+   use apps/web/src/messages/en.json
    Git Short branches, one task per pull request, message
    starts with the task ID, CI must be green
 
@@ -69,10 +69,10 @@ packages/shared
 user_roles user_id, role_id A user may hold several admin
 sub-roles
 audit_log actor_user_id, action, entity,
-entity_id, before (jsonb), after
-(jsonb), ip, user_agent
-Append-only; a database trigger
-blocks update and delete
+entity_id, before (document), after
+(document), ip, user_agent
+Append-only; restricted crm_app role has only
+find and insert on crm_immutable; probe denies update/delete
 
 ## M1 implementation additions (MongoDB)
 
@@ -107,7 +107,7 @@ path is used for every downline
 query; parent must be a higher
 tier
 partner_users partner_id, user_id, role ( owner or
-staff ), staff_permissions (jsonb)
+staff ), staff_permissions (document)
 Staff permissions can only be a
 subset of the owner's
 kyc_documents owner_type, owner_id, doc_type,
@@ -127,7 +127,7 @@ Table Key columns Rules
 plans key, name, tier, price_min_paise,
 price_max_paise, id_quota (null
 means unlimited), gst_rate_bp,
-features (jsonb), active
+features (document), active
 Price on an invoice must fall
 inside the band
 invoices number (unique per financial
@@ -171,8 +171,8 @@ amount_paise (signed),
 balance_after_paise, ref_type, ref_id,
 idempotency_key (unique), memo,
 created_by
-Append-only by database
-trigger; corrections are new
+Append-only in crm_immutable under the restricted
+runtime role; corrections are new
 reversing entries; seq is
 gapless per wallet
 topup_requests partner_id, amount_paise, paid_on,
@@ -197,7 +197,7 @@ stores its own price
 8.6 Customers and orders (M5)
 Table Key columns Rules
 service_forms service_id, version, schema
-(jsonb), published
+(document), published
 Schema holds sections, fields,
 types, validation, conditional
 rules; published versions are
@@ -213,7 +213,7 @@ Duplicate warning on mobile
 or GSTIN within a partner
 orders number, partner_id, customer_id,
 service_id, form_version,
-form_data (jsonb), status,
+form_data (document), status,
 price_paise, gst_paise,
 customer_fee_paise, hold_entry_id,
 assigned_to, sla_due_at,
@@ -258,10 +258,10 @@ due_on, message, done_at
 Worker sends in-app and email
 reminders
 lead_pages partner_id, slug (unique), title, intro,
-fields (jsonb), active
+fields (document), active
 Public form posts create leads
-tool_invoices partner_id, number, client (jsonb),
-lines (jsonb), totals, pdf_key
+tool_invoices partner_id, number, client (document),
+lines (document), totals, pdf_key
 Partner's own invoices;
 separate number series
 Table Key columns Rules
@@ -304,7 +304,7 @@ tickets number, partner_id, order_id,
 category, subject, status, priority,
 assigned_to, sla_due_at
 ticket_messages ticket_id, author_user_id, body,
-attachments (jsonb)
+attachments (document)
 content_items kind ( lesson , kit ,
 announcement ), title, body,
 file_key, audience, published_at
@@ -313,11 +313,11 @@ notifications user_id, kind, title, body, link,
 read_at
 In-app bell
 email_templates key, subject, body Editable in settings
-email_outbox to, template_key, data (jsonb),
+email_outbox to, template_key, data (document),
 status, attempts, sent_at,
 last_error
 Worker retries with back-off
-settings key, value (jsonb) Company and GST details, bank
+settings key, value (document) Company and GST details, bank
 details for payments, invoice
 prefix, SLA defaults, minimum
 payout, TDS percent and

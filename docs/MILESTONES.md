@@ -7,7 +7,7 @@
 10. Delivery roadmap
     Eleven milestones, built strictly in order because each depends on the one before. Weeks
     are planning figures for one to two engineers reviewing Codex's output; M7 and M9 can
-    overlap if a second engineer is available, which brings the total toward 28 weeks.
+    overlap if a second engineer is available, which brings the original plan toward 28 weeks before MongoDB safeguards.
     delivery roadmap · 11 milestones in 5 phases
     Milestone Weeks Size Depends
     on
@@ -36,7 +36,7 @@ weeks.
 Effect of MongoDB: the transaction, validation and integrity safeguards add about one
 week to M4 and one to M9, so plan for about 34 weeks in total. The week columns here
 and in section 12 show the base plan; add one week from M4 onward and one more from
-M9 onward.
+M9 onward, for a roughly 34-week headline plan.
 Gates. At the end of M1, M4, M6 and M9 the owner reviews a live demo in staging and
 signs off before Codex starts the next milestone. M10 ends with the go-live checklist in
 section 14. 11. Milestone task lists
@@ -88,20 +88,19 @@ M0-01 Create the repo layout from section 7, pnpm workspace, Turborepo, strict
 TypeScript, ESLint, Prettier, commit hooks. Create AGENTS.md and the docs/ files
 from this document.
 M0-02 Dockerfiles (multi-stage) for web and api; docker-compose.yml with the
-seven containers, health checks and volumes; Caddyfile; dev override with mailpit and
-adminer.
+seven containers, health checks and volumes; Caddyfile; dev override with Mailpit and Mongo Express.
 M0-03 API skeleton: config validated by Zod from env, /api/health , structured
-logging with request id, global error filter using the standard error shape.
+logging with request id, global exception filter using the standard error shape.
 M0-04 Web skeleton: Next.js route groups for public, partner and admin; three
 layouts with navigation placeholders; translation files; typed API client.
-M0-05 Prisma setup, first migration, make migrate , seed script skeleton, make seed .
+M0-05 Mongoose models, first migrate-mongo migration, make migrate , seed script skeleton, make seed .
 M0-06 packages/shared : permission keys, status enums, Money helper (integer
 paise, GST split, rounding rules) with exhaustive unit tests.
 M0-07 CI: install, lint, typecheck, unit tests, build images, start compose, smoke test
 through the proxy.
 M0-08 Test harness: Supertest with a throwaway database, Playwright config, data
 factories.
-M1-01 Models from 8.1 and migration; database trigger blocking update and delete on
+M1-01 Models from 8.1 and migration; restricted crm_app role in crm_immutable, denying update and delete on
 audit_log .
 M1-02 Argon2 login for partners and admins on separate endpoints and cookie names;
 Redis sessions with different lifetimes; logout; CSRF; lockout after repeated failures
@@ -134,8 +133,8 @@ M1-08 Admin UI: login, 2FA enrollment, users list and edit, role assignment, aud
 page.
 M1-09 Partner UI: login, forgot and reset password, profile with password change and
 2FA, navigation by role.
-M1-10 Row-level security framework and a test that proves it blocks cross-partner
-reads.
+M1-10 Repository scoping framework with scopeToActor and tests that block cross-partner
+reads and fail the build on unscoped repository queries.
 M2-01 Models from 8.2, migration, seed of sample territories.
 M2-02 Public apply page and API: validation, document upload by presigned URL,
 email verification link, territory availability check.
@@ -176,9 +175,9 @@ M3-06 Activation job: on a paid plan invoice create seats, create the empty wall
 activate the partner, send welcome email and login invite, exactly once.
 M3-07 Partner billing page: invoices list and PDF download.
 M3-08 Admin invoices list, void a draft, issue a credit note.
-M4-01 Models from 8.4; triggers blocking update and delete on ledger_entries ;
-LedgerService.post() that locks the wallet row, assigns gapless seq , computes
-balance_after , and honours idempotency_key .
+M4-01 Models from 8.4; restricted crm_app role in crm_immutable denies update/delete on ledger_entries;
+LedgerService.post() uses atomic findOneAndUpdate on the wallet within the transaction,
+assigns gapless seq, computes balance_after and honours idempotency_key.
 M4-02 Hold, release and convert-hold primitives; available balance is balance minus
 held.
 M4-03 Partner top-up request: API and UI with amount, date, reference and proof

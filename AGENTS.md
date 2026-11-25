@@ -12,6 +12,7 @@
 
 Multi-service franchise portal: public site, partner portal, admin portal, one API.
 Full specification is in `docs/`. Read `docs/PROGRESS.md` first and take the first unchecked task in order.
+Stack: see `docs/DECISIONS.md`.
 
 ## Commands
 
@@ -19,7 +20,7 @@ Full specification is in `docs/`. Read `docs/PROGRESS.md` first and take the fir
 - `make up-dev` — build and start the local development stack with Mailpit and Mongo Express
 - `make check` — lint, typecheck, unit and API integration tests, and build (start `make up-dev` first)
 - `make e2e` — Playwright against the compose stack
-- `make migrate` — apply MongoDB migrations
+- `make migrate` — apply migrate-mongo migrations
 - `make seed` — load seed data
 
 ## Architecture rules
@@ -29,7 +30,7 @@ Full specification is in `docs/`. Read `docs/PROGRESS.md` first and take the fir
 - Money is integer paise via the Money helper. Never use floating point for money.
 - Balances change only through the ledger service. Ledger, audit, and event records are append-only.
 - Request and response shapes are shared Zod schemas.
-- All user-facing text lives in translation files.
+- All user-facing text lives in `apps/web/src/messages/en.json`.
 - Business records are never hard-deleted.
 
 ## Process rules

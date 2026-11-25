@@ -1,5 +1,11 @@
 # Progress
 
+## D-01 — Stack reconciliation (in progress)
+
+The repository uses Next.js App Router and NestJS on `@nestjs/platform-express`; MongoDB replica set/Mongoose/migrate-mongo; and BullMQ on Redis. Reconciled the roadmap and architecture docs to this implementation, documented the installed/missing web UI libraries, corrected the translation path, MongoDB runtime-role and repository-scoping language, and clarified that frontend Steps 4–6 are mock-adapter demo work rather than M7/M9/M10 completion. Added a static repository query scope test. The repository layer is not yet present in API modules; current direct Mongoose usage is recorded in `docs/QUESTIONS.md`, so this test protects the new layer but does not claim to cover existing queries.
+
+**D-01 verification, 2026-11-25:** `pnpm --filter @franchise-crm/api test` passed (11 passed, 1 Mongo-only integration skipped without `MONGODB_TEST_URI`). `make check` passed lint, typecheck, unit tests (web 10/10, shared 17/17, API 11 passed/1 skipped), and build (50 routes); its Docker API integration step could not connect to `/Users/admin/.docker/run/docker.sock` (`permission denied`), so Mongo integration and the authorization probe did not run. `make help` prints the stack and command list. `docker compose config` confirms the production-style web service has no volume mount; no services were started. D-01 is code/doc complete, with Docker-backed checks outstanding in this environment. Do not start D-02 until commit `D-01: stack reconciliation` is recorded.
+
 Work in task order. M1 was accepted by the owner on local evidence; live staging checks are deferred until release preparation.
 
 ## Deferred M2 (until the frontend demo is accepted)

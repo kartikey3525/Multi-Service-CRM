@@ -1,4 +1,7 @@
-.PHONY: up up-dev down logs check api-test mongo-probe e2e migrate migrate-dev seed seed-dev demo
+.PHONY: help up up-dev down logs check api-test mongo-probe e2e migrate migrate-dev seed seed-dev demo
+
+help:
+	@printf "Multi-Service CRM (Next.js + NestJS + MongoDB)\nCommands: make demo, up-dev, check, e2e, migrate, seed\n"
 
 demo:
 	VITE_API_MODE=mock pnpm --filter @franchise-crm/web dev

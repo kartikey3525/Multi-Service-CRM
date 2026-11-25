@@ -2,7 +2,7 @@
 
 > Source: _Multi-Service Franchise CRM: Product & Engineering Roadmap_ (44 pages). This repository copy is the working specification.
 >
-> **Project override:** MongoDB is the primary database; Redis is only for supporting sessions and queues. This user decision overrides the source PDF's PostgreSQL/Prisma line. The selected stack is recorded in `DECISIONS.md`.
+> **Project decision:** Next.js App Router web; NestJS API on `@nestjs/platform-express`; MongoDB replica set with Mongoose and migrate-mongo; BullMQ queues on Redis. MongoDB is primary; Redis is only for sessions and queues. See `DECISIONS.md`.
 
 ## Source page 1
 
@@ -73,16 +73,16 @@ D7 Money is stored as integer paise in an
 append-only ledger.
 No floats for money anywhere.
 D8 TypeScript everywhere: Next.js, NestJS,
-PostgreSQL, Redis, Prisma.
+MongoDB, Redis, Mongoose.
 One language so Codex keeps context
 across the stack.
-D9 Files go to S3-compatible storage (MinIO
-container).
+D9 Files go to private S3-compatible storage (RustFS
+for local development; provider configurable).
 Can move to a cloud bucket by changing
 environment variables.
 D10 Single company (one tenant); INR; times
 stored in UTC and shown in Asia/Kolkata.
-English UI with all text in translation files
+English UI with all text in `apps/web/src/messages/en.json`
 so Hindi can be added.
 No multi-tenant code in release 1.
 

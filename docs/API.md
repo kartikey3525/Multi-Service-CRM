@@ -7,10 +7,10 @@
 Gapless counters: number_sequences and ledger seq use an atomic
 findOneAndUpdate increment inside the same transaction as the document that uses
 the number.
-Scoping instead of row-level security: MongoDB has no row-level security, so
-isolation depends on repository scoping and its tests; a nightly integrity job also
-reports orphan references and wallets whose cached balance differs from the ledger
-sum. 9. API contract
+Partner data isolation uses repository scoping: repository queries apply
+`scopeToActor(actor, filter)` or document a permission-guarded admin-only bypass.
+A static test scans repository query calls. The nightly integrity job also reports
+orphan references and wallets whose cached balance differs from the ledger sum. 9. API contract
 Base path /api/v1 . JSON only. Cookie session; state-changing requests carry a CSRF
 token. Conventions (errors, pagination, idempotency) are in section 7.1. Codex writes an
 OpenAPI file from the Zod schemas and keeps it in docs/openapi.yaml ; the tables below

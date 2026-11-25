@@ -16,8 +16,8 @@ and decide when each item can be scheduled. 14. Quality, security, deployment an
 Passwords hashed with argon2; sessions in HTTP-only, secure, same-site cookies;
 CSRF protection on all state-changing calls.
 Admin accounts always use 2FA; admin and partner logins are separate.
-Every route has a permission; every query is scoped; row-level security is on partner-
-scoped tables.
+Every route has a permission; repository queries scope partner data with
+`scopeToActor(actor, filter)` or document a permission-guarded admin-only bypass.
 Area Target
 Availability 99.9% monthly for the portal; maintenance
 windows announced
@@ -91,7 +91,7 @@ Staging UAT script passed; every finding fixed or recorded as accepted.
     Direct money loss and
     partner disputes
     Append-only ledger, database
-    triggers, concurrency tests,
+    restricted MongoDB runtime roles, concurrency tests,
     nightly reconciliation, line-by-line
     human review of M4 and M8
     Codex loses context

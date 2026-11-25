@@ -1,5 +1,8 @@
 # Frontend demo plan
 
+> Steps 4–6 are the frontend demo track on mock adapters. They do not mark or
+> complete M7, M9, or M10 backend milestone tasks.
+
 Start point: branch `frontend-demo` from `m2-partner-onboarding` at `f1aff40`.
 
 ## Build steps

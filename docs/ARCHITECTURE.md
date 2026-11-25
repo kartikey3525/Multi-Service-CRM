@@ -2,7 +2,7 @@
 
 > Source: _Multi-Service Franchise CRM: Product & Engineering Roadmap_ (44 pages). This repository copy is the working specification.
 
-The source roadmap contains conflicting stack choices. See [DECISIONS.md](DECISIONS.md) for the selected implementation: Next.js, NestJS, MongoDB/Mongoose as the primary database, Redis for sessions, and RustFS for local S3-compatible storage. The M1 email outbox is stored in MongoDB and processed by the worker with retry/backoff. See [QUESTIONS.md](QUESTIONS.md) for remaining owner questions.
+The implemented stack is Next.js App Router, NestJS on `@nestjs/platform-express`, MongoDB replica set with Mongoose and migrate-mongo, BullMQ on Redis, and RustFS for local S3-compatible storage. See [DECISIONS.md](DECISIONS.md). The M1 email outbox is stored in MongoDB and processed by the worker with retry/backoff. See [QUESTIONS.md](QUESTIONS.md) for remaining owner questions.
 
 ## Source page 12
 
@@ -26,19 +26,16 @@ to web
 
 ## Source page 13
 
-Development adds mailpit (catches outgoing email) and adminer (database viewer).
+Development adds Mailpit (catches outgoing email), Mongo Express (MongoDB viewer), and hot reload.
 One docker compose up must start a working system with seeded demo data.
 6.2 Technology choices
 Container Image and command Port
 (internal)
 Volume Notes
-web nginx serving the
-static React build
-(Vite)
-80 none Stateless; single-page
-app with history fallback
-to index.html
-api Node LTS, Express 4000 none Health endpoint
+web Next.js standalone Node server
+3000 none Stateless; App Router server
+api Node LTS, NestJS on
+@nestjs/platform-express 4000 none Health endpoint
 /api/health ;
 migrations run as a
 separate one-off
@@ -57,17 +54,17 @@ for transactions; never
 exposed publicly
 redis Redis 7 6379 redisdata Sessions and queues;
 never exposed publicly
-storage MinIO 9000 miniodata Private buckets: kyc ,
+storage RustFS 9000 miniodata Private buckets: kyc ,
 orders , invoices ,
 content
 Concern Choice
 Repo pnpm workspaces with Turborepo, TypeScript
 strict mode
-Web React with Vite, React Router, Tailwind CSS,
-shadcn/ui components, React Hook Form with Zod,
-TanStack Query
-API Node with Express, Zod schemas shared with the
-web, Mongoose models, migrate-mongo for
+Web Next.js App Router, React, TypeScript; shared Zod
+contracts and app-local CSS (see DECISIONS.md for
+the installed/missing UI library audit)
+API NestJS on @nestjs/platform-express, shared Zod
+schemas, Mongoose models, migrate-mongo for
 schema and data migrations
 
 ## Source page 14
@@ -80,12 +77,12 @@ validators on critical collections
 Queue and cron BullMQ on Redis
 Auth argon2 password hashing, TOTP with otplib ,
 server-side sessions in Redis, CSRF protection
-Files S3 client against MinIO, presigned URLs, antivirus
+Files S3 client against private S3-compatible storage, antivirus
 scan hook (stub in release 1)
 PDFs pdfmake for invoices, credit notes and statements
 Email Nodemailer over SMTP, templates stored in the
 database and editable in settings
-Tests Vitest (unit), Supertest (API) against a throwaway
+Tests Node built-in test/assert (unit), Supertest (API) against a throwaway
 MongoDB replica set, Playwright (end to end)
 Quality ESLint, Prettier, tsc --noEmit , commit hooks,
 GitHub Actions or equivalent CI
@@ -120,7 +117,7 @@ is what lets it find the right file without re-reading the whole project.
 /
 AGENTS.md rules and commands for Codex
 docker-compose.yml base services
-docker-compose.dev.yml mailpit, mongo-express, hot reload
+docker-compose.dev.yml Mailpit, Mongo Express, hot reload
 docker-compose.prod.yml production overrides
 .env.example every variable, dummy values
 Makefile make up, make test, make check, make seed, make
@@ -128,15 +125,14 @@ migrate
 docs/ SPEC, ARCHITECTURE, DATA_MODEL, API, MILESTONES,
 PROGRESS, DECISIONS, QUESTIONS
 apps/
-web/ React with Vite
-src/routes/public/ public site and the customer status page
-src/routes/partner/ partner portal pages
-src/routes/admin/ admin portal pages
+web/ Next.js App Router
+src/app/ public, partner and admin route groups
+src/components/ shared UI and domain components
 src/components/ui/ base components
 src/components/domain/ order table, wallet card, form renderer
 src/lib/ api client, auth helpers, formatters
 src/messages/en.json all user-facing text
-api/ Node with Express
+api/ NestJS modules
 migrations/ migrate-mongo scripts
 src/common/ middleware, permission guard, errors, pagination,
 money, scoping
@@ -152,14 +148,14 @@ settings,
 notifications, files, audit, tools
 src/adapters/ Phase B interfaces and disabled stubs
 src/seed/ seed data and catalogue import
-src/server.ts API entry
+src/main.ts NestJS API entry
 src/worker.ts worker entry
 packages/
 shared/ Zod schemas, types, permission keys, status
 enums, money helpers
 config/ eslint, tsconfig, prettier presets
 e2e/ Playwright tests, one folder per milestone
-ops/ Caddyfile, nginx config, backup and restore
+ops/ Caddyfile, backup and restore
 scripts, runbook.md
 Inside every API module: *.controller.ts , *.service.ts , *.repository.ts , dto/
 (Zod), *.spec.ts , README.md .
@@ -169,14 +165,13 @@ Layers Route handler does HTTP and permission only;
 service holds business rules; repository is the only
 code that touches Mongoose models. Each module
 also has its *.model.ts
-Permissions requirePermission('orders.create')
-middleware on every route; a test scans the router
-and fails if any route lacks it
-Data scoping Repositories take an Actor and always apply
-scopeToActor(actor) ; there is no repository
-method that returns unscoped partner data except
-in admin-only code paths; a test fails the build if a
-query lacks scope
+Permissions `@RequirePermission('orders.create')` decorator
+and guard on every route; a test scans routes and fails
+if any route lacks a permission declaration
+Data scoping Repositories take an Actor and apply
+scopeToActor(actor); admin-only bypasses are explicit
+and permission-guarded; a static test fails the build
+if a repository query lacks scope or documented bypass
 Money Money helper over integer paise; formatting only in
 the web layer; never number arithmetic on rupees
 IDs and time MongoDB ObjectId for _id ; Date values in UTC

@@ -10,7 +10,12 @@ Record implementation decisions and dependencies with date and reason.
 ## 2026-11-24 — application stack and primary database
 
 - **Decision:** Next.js web app and NestJS API, with MongoDB as the primary database, Mongoose for models, and migrate-mongo for migrations. Redis is reserved for sessions and queues; it is not a system-of-record database. The local object-storage container is RustFS; the S3 endpoint and credentials remain configurable so a hosted S3-compatible service can replace it.
-- **Reason:** The roadmap marks D1/D8 as fixed and specifies Next.js/NestJS there; the owner explicitly selected MongoDB. The architecture's MongoDB/Mongoose details provide the matching persistence layer. This intentionally overrides the roadmap's conflicting PostgreSQL/Prisma option. Use the MongoDB replica set because money operations require transactions. Mongoose 9 is selected for MongoDB connections and data models; migrate-mongo manages forward-only migrations.
+- **Reason:** The roadmap's fixed web/API choices and MongoDB/Mongoose architecture match the implementation and the owner's database decision. Use a MongoDB replica set because money operations require transactions. Mongoose 9 is selected for connections and models; migrate-mongo manages forward-only migrations.
+
+## 2026-11-25 — D-01 stack reconciliation
+
+- **Decision:** API = NestJS; docs reconciled to the repo. Reason: already built and tested; roadmap D8 already specified NestJS.
+- **UI library audit:** Next.js App Router, React, TypeScript and shared Zod contracts are installed. Tailwind CSS, shadcn/ui, React Hook Form and TanStack Query are not installed; see `docs/QUESTIONS.md`. Do not add them as part of D-01.
 
 ## 2026-11-24 — dependency build policy
 
