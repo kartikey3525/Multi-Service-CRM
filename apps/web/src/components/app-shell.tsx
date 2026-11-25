@@ -29,6 +29,7 @@ export function PublicShell({ children }: { children: ReactNode }) {
             <Link href="/services">{messages.shell.publicServices}</Link>
             <Link href="/plans">{messages.shell.publicPlans}</Link>
             <Link href="/apply">{messages.shell.publicApply}</Link>
+            <Link href="/order-status">{messages.shell.trackOrder}</Link>
           </nav>
           <div className="header-actions">
             <Link className="header-login" href="/login">

@@ -1,13 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import messages from '../messages/en.json';
 import { apiPost, requestCsrfToken } from '../lib/api-client';
 import { isDemoMode } from '../lib/demo-mode';
+import { demoLoginUsers } from '../lib/demo-fixtures';
 
 type LoginFormProps = { kind: 'admin' | 'partner' };
-type LoginResponse = { status: string; requiresTotp?: boolean; requiresTotpSetup?: boolean };
+type LoginResponse = {
+  status: string;
+  requiresPasswordChange?: boolean;
+  requiresTotp?: boolean;
+  requiresTotpSetup?: boolean;
+};
 
 export function LoginForm({ kind }: LoginFormProps) {
   const router = useRouter();
@@ -16,6 +22,7 @@ export function LoginForm({ kind }: LoginFormProps) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [demo, setDemo] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => setDemo(isDemoMode()), []);
 
@@ -27,7 +34,8 @@ export function LoginForm({ kind }: LoginFormProps) {
       const csrf = await requestCsrfToken();
       const path = kind === 'admin' ? '/v1/auth/admin/login' : '/v1/auth/login';
       const result = await apiPost<LoginResponse>(path, { email, password }, csrf);
-      if (result.requiresTotpSetup) router.push('/admin/2fa/setup');
+      if (result.requiresPasswordChange) router.push('/change-password?forced=1');
+      else if (result.requiresTotpSetup) router.push('/admin/2fa/setup');
       else if (result.requiresTotp)
         router.push(kind === 'admin' ? '/admin/2fa/verify' : '/2fa/verify');
       else router.push(kind === 'admin' ? '/admin' : '/partner');
@@ -52,7 +60,7 @@ export function LoginForm({ kind }: LoginFormProps) {
           {messages.auth.adminSecurityNote}
         </p>
       ) : null}
-      <form className="form auth-form" onSubmit={submit}>
+      <form ref={formRef} className="form auth-form" onSubmit={submit}>
         <label className="field">
           <span>{messages.auth.email}</span>
           <input
@@ -90,6 +98,27 @@ export function LoginForm({ kind }: LoginFormProps) {
           {busy ? messages.auth.loading : messages.auth.signIn}
         </button>
       </form>
+      {demo ? (
+        <section className="demo-login-options" aria-label={messages.auth.demoAccounts}>
+          <p>{messages.auth.demoAccounts}</p>
+          {demoLoginUsers
+            .filter((user) => user.kind === kind)
+            .map((user) => (
+              <button
+                className="text-button"
+                key={user.id}
+                type="button"
+                onClick={() => {
+                  setEmail(user.email);
+                  setPassword('demo-password');
+                  window.setTimeout(() => formRef.current?.requestSubmit(), 0);
+                }}
+              >
+                {user.roleNames[0]} · {user.email}
+              </button>
+            ))}
+        </section>
+      ) : null}
       <div className="auth-switch">
         {kind === 'admin' ? (
           <a href="/login">{messages.auth.partnerPortalLabel}</a>

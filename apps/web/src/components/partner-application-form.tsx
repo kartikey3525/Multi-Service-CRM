@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import messages from '../messages/en.json';
 import { apiGet, apiPost, apiUpload, requestCsrfToken } from '../lib/api-client';
+import Link from 'next/link';
 
 type Tier = 'master_distributor' | 'distributor' | 'retailer';
 type FormValues = {
@@ -33,6 +34,7 @@ export function PartnerApplicationForm() {
   const [values, setValues] = useState(initialValues);
   const [availability, setAvailability] = useState('');
   const [result, setResult] = useState('');
+  const [applicationId, setApplicationId] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [kycFile, setKycFile] = useState<File>();
@@ -86,6 +88,7 @@ export function PartnerApplicationForm() {
         resultText = messages.publicSite.apply.uploadReceived;
       }
       setResult(resultText);
+      setApplicationId(submitted.applicationId);
       setValues(initialValues);
       setKycFile(undefined);
       setAvailability('');
@@ -96,7 +99,20 @@ export function PartnerApplicationForm() {
     }
   }
 
-  if (result) return <p role="status">{result}</p>;
+  if (result)
+    return (
+      <div className="form-success" role="status">
+        <p>{result}</p>
+        {applicationId ? (
+          <Link
+            className="button button-secondary"
+            href={`/apply/status?token=${encodeURIComponent(applicationId)}`}
+          >
+            {messages.auth.applicationStatusTitle}
+          </Link>
+        ) : null}
+      </div>
+    );
 
   return (
     <form className="form application-form" onSubmit={submit}>
