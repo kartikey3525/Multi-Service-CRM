@@ -3,7 +3,13 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import test from 'node:test';
 
-const partnerModels = new Set(['PartnerModel', 'PartnerUserModel', 'KycDocumentModel']);
+const partnerModels = new Set([
+  'PartnerModel',
+  'PartnerUserModel',
+  'KycDocumentModel',
+  'InvoiceModel',
+  'PaymentModel',
+]);
 const queryMethod =
   /\b([\w$.]+)\.(?:find|findOne|findById|findByIdAndUpdate|findByIdAndDelete|findOneAndUpdate|findOneAndDelete|updateOne|updateMany|deleteOne|deleteMany|replaceOne|countDocuments|estimatedDocumentCount|exists|distinct|aggregate|where)\s*\(/g;
 
@@ -80,7 +86,9 @@ function unscopedModelQueries(source: string, models: string[]): string[] {
     const openIndex = callIndex + match[0].lastIndexOf('(');
     const end = callEnd(source, openIndex);
     const call = source.slice(callIndex, end + 1);
-    const namedBypass = /SCOPE_BYPASS\(\s*actor\s*,\s*['"][\w.]+['"]/.test(call);
+    const namedBypass = /SCOPE_BYPASS\(\s*actor\s*,\s*(?:['"][\w.]+['"]|Permission\.\w+)/.test(
+      call,
+    );
     const permitted = /scopeToActor\(\s*actor\s*,/.test(call) || namedBypass;
     if (!permitted) violations.push(`${line}: ${match[0].trim()}`);
   }
@@ -130,6 +138,13 @@ test('scope guard fixture catches both an illegal model import and an unscoped r
   const namespaceViolations = architectureViolations([namespaceFixture]);
   assert.equal(namespaceViolations.length, 2, namespaceViolations.join('\n'));
   assert.match(namespaceViolations[1]!, /partnerModels\.PartnerModel\.find/);
+  const invoiceFixture = {
+    name: 'fixture.invoice.repository.ts',
+    source: "import { InvoiceModel } from './models';\nInvoiceModel.find({ status: 'issued' });",
+  };
+  assert.deepEqual(architectureViolations([invoiceFixture]), [
+    `${invoiceFixture.name}:2: InvoiceModel.find(`,
+  ]);
 });
 
 test('repository query fixture rejects unscoped access and accepts scope or named bypass', () => {

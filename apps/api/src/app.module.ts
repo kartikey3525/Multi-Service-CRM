@@ -5,9 +5,10 @@ import { DatabaseLifecycle } from './database';
 import { IdentityModule } from './modules/identity/identity.module';
 import { PartnersModule } from './modules/partners/partners.module';
 import { FilesModule } from './modules/files/files.module';
+import { BillingModule } from './modules/billing/billing.module';
 
 @Module({
-  imports: [IdentityModule, PartnersModule, FilesModule],
+  imports: [IdentityModule, PartnersModule, FilesModule, BillingModule],
   controllers: [HealthController],
   providers: [StructuredLoggerMiddleware, DatabaseLifecycle],
 })

@@ -17,6 +17,11 @@ Record implementation decisions and dependencies with date and reason.
 - **Decision:** API = NestJS; docs reconciled to the repo. Reason: already built and tested; roadmap D8 already specified NestJS.
 - **UI library audit:** Next.js App Router, React, TypeScript and shared Zod contracts are installed. Tailwind CSS, shadcn/ui, React Hook Form and TanStack Query are not installed; see `docs/QUESTIONS.md`. Do not add them as part of D-01.
 
+## 2026-11-26 — M3-01 invoice numbering defaults
+
+- **Decision:** Use India Standard Time for April-to-March financial-year boundaries and format sequence numbers as `YYYY-YY/000001`. Keep invoice lines embedded; duplicate `partnerId` onto payments for repository hierarchy scope.
+- **Reason:** The roadmap specifies the financial-year boundary and integer paise, while the database model leaves format/timezone unspecified. These defaults align with the Indian GST context and the repository-scope requirement; payment methods remain open until M3-05.
+
 ## 2026-11-24 — dependency build policy
 
 - **Decision:** Allow the `esbuild` package install script; keep other dependency build scripts denied unless separately reviewed.

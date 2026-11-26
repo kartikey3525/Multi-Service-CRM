@@ -43,6 +43,9 @@ const roleDefinitions: SeedRole[] = [
       ...adminIdentity,
       Permission.plansRead,
       Permission.plansManage,
+      Permission.invoicesRead,
+      Permission.invoicesIssue,
+      Permission.paymentsRead,
       Permission.walletRead,
       Permission.walletTopupApprove,
       Permission.walletAdjust,
@@ -101,6 +104,7 @@ const roleDefinitions: SeedRole[] = [
     kind: 'partner',
     permissions: [
       ...ownPartner,
+      Permission.invoicesRead,
       Permission.walletRead,
       Permission.walletTopupRequest,
       Permission.ordersRead,
@@ -122,6 +126,7 @@ const roleDefinitions: SeedRole[] = [
     kind: 'partner',
     permissions: [
       ...ownPartner,
+      Permission.invoicesRead,
       Permission.walletRead,
       Permission.walletTopupRequest,
       Permission.ordersRead,
@@ -142,6 +147,7 @@ const roleDefinitions: SeedRole[] = [
     kind: 'partner',
     permissions: [
       ...ownPartner,
+      Permission.invoicesRead,
       Permission.walletRead,
       Permission.walletTopupRequest,
       Permission.ordersRead,
