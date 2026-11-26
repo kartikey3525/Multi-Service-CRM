@@ -1,5 +1,10 @@
 # Decisions
 
+## 2026-11-26 — generated Next.js environment declaration
+
+- **Decision:** Ignore `apps/web/next-env.d.ts` as generated Next.js output.
+- **Reason:** Next.js rewrites this file during builds; it should not create unrelated source diffs.
+
 Record implementation decisions and dependencies with date and reason.
 
 ## 2026-11-24 — monorepo tooling

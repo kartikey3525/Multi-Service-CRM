@@ -1,3 +1,5 @@
+# ARCHIVED — use [ROADMAP.md](ROADMAP.md) for current task numbering and status.
+
 # Milestones and acceptance criteria
 
 > Source: _Multi-Service Franchise CRM: Product & Engineering Roadmap_ (44 pages). This repository copy is the working specification.

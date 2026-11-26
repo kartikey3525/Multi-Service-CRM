@@ -1,3 +1,5 @@
+# ARCHIVED — use [ROADMAP.md](ROADMAP.md) for current task numbering and status.
+
 # Frontend demo plan
 
 > Steps 4–6 are the frontend demo track on mock adapters. They do not mark or
