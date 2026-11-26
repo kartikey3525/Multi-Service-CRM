@@ -1,5 +1,10 @@
 # Decisions
 
+## 2026-11-26 — generated frontend screenshots
+
+- **Decision:** Do not track `docs/screenshots/`; keep generated local screenshots and rely on Playwright to regenerate them.
+- **Reason:** They change between runs and create noisy diffs. Add curated evidence elsewhere only when explicitly needed.
+
 ## 2026-11-26 — generated Next.js environment declaration
 
 - **Decision:** Ignore `apps/web/next-env.d.ts` as generated Next.js output.
