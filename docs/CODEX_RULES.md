@@ -1,5 +1,9 @@
 # Working rules
 
+## Required reading
+
+Read only `docs/CODEX_RULES.md`, `docs/ROADMAP.md`, `docs/STATUS.md`, the SPEC section for the task, and `docs/QUESTIONS.md`. Read archived docs only when the task explicitly asks.
+
 - Priority: Phase A frontend on demo data, then Phase B backend one feature at a time, then Phase C release work. Never skip a task or gate in `docs/ROADMAP.md`.
 - Report what was actually run and what was not, including Docker, server, browser, Playwright, Mongo, responsive and accessibility checks. Mark missing evidence unverified.
 - Write tests first for implementation tasks. One task per commit; use the new task ID in the commit message.

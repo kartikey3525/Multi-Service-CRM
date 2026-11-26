@@ -11,7 +11,7 @@
 ## Project
 
 Multi-service franchise portal: public site, partner portal, admin portal, one API.
-Full specification is in `docs/`. Read `docs/CODEX_RULES.md`, then `docs/ROADMAP.md`; take the first unchecked task in order.
+Read only `docs/CODEX_RULES.md`, `docs/ROADMAP.md`, `docs/STATUS.md`, the SPEC section for the task, and `docs/QUESTIONS.md`; take the first unchecked task. Archived docs are read only if the task says so.
 Stack: see `docs/DECISIONS.md`.
 
 ## Commands

@@ -61,4 +61,111 @@ The frontend demo foundation/public/auth/admin/partner work is present in commit
 
 ## Archive: old IDs to new numbering
 
-Frontend task mapping: D-01/D-02 and FD-01..FD-04 → A1–A14 (code exists; task acceptance not inferred); S-01 and F-01 → planning complete, reflected in this roadmap. R-01/R-02 → B1/B2 scope foundations (completed commits `ef7022e`, `dc54ad0`). M0-01..M0-08 → done (`433e3f3`). M1-01..M1-10 → B1 (code complete; Gate A accepted). M2-01..M2-09 → B2 (implemented subset; see deferred work). M3-01..M3-08 → B3; M3-01 maps to B3 and is partially implemented (`fa8ef0b`); M3-02..M3-08 remain. M4-01..M4-09 → B4. M5-01..M5-13 → B5/B6. M6-01..M6-08 → B5. M7-01..M7-08 → B7. M8-01..M8-09 → B8. M9-01..M9-06 → B9. M10-01..M10-12 → B10/C1–C5 by feature. M0/M1/M2/M3 old task evidence and open caveats remain in archived `docs/MILESTONES.md` and `docs/PROGRESS.md` history.
+| Old task | New task/status                                                      |
+| -------- | -------------------------------------------------------------------- |
+| M0-01    | done (`433e3f3`)                                                     |
+| M0-02    | done (`433e3f3`)                                                     |
+| M0-03    | done (`433e3f3`)                                                     |
+| M0-04    | done (`433e3f3`)                                                     |
+| M0-05    | done (`433e3f3`)                                                     |
+| M0-06    | done (`433e3f3`)                                                     |
+| M0-07    | done (`433e3f3`)                                                     |
+| M0-08    | done (`433e3f3`)                                                     |
+| M1-01    | B1; code present, Gate A owner-accepted; staging deferred            |
+| M1-02    | B1; code present, Gate A owner-accepted; staging deferred            |
+| M1-03    | B1; code present, Gate A owner-accepted; staging deferred            |
+| M1-04    | B1; code present, Gate A owner-accepted; staging deferred            |
+| M1-05    | B1; code present, Gate A owner-accepted; staging deferred            |
+| M1-06    | B1; code present, Gate A owner-accepted; staging deferred            |
+| M1-07    | B1; code present, Gate A owner-accepted; staging deferred            |
+| M1-08    | B1; code present, Gate A owner-accepted; staging deferred            |
+| M1-09    | B1; code present, Gate A owner-accepted; staging deferred            |
+| M1-10    | B1; code present, Gate A owner-accepted; staging deferred            |
+| M2-01    | B2; implemented subset (`a6c7a35`, `f1aff40`), deferred items remain |
+| M2-02    | B2; implemented subset (`a6c7a35`, `f1aff40`), deferred items remain |
+| M2-03    | B2; implemented subset (`a6c7a35`, `f1aff40`), deferred items remain |
+| M2-04    | B2; implemented subset (`a6c7a35`, `f1aff40`), deferred items remain |
+| M2-05    | B2; implemented subset (`a6c7a35`, `f1aff40`), deferred items remain |
+| M2-06    | B2; implemented subset (`a6c7a35`, `f1aff40`), deferred items remain |
+| M2-07    | B2; implemented subset (`a6c7a35`, `f1aff40`), deferred items remain |
+| M2-08    | B2; implemented subset (`a6c7a35`, `f1aff40`), deferred items remain |
+| M2-09    | B2; implemented subset (`a6c7a35`, `f1aff40`), deferred items remain |
+| M3-01    | B3, partially implemented (`fa8ef0b`); Mongo acceptance pending      |
+| M3-02    | B3; not started                                                      |
+| M3-03    | B3; not started                                                      |
+| M3-04    | B3; not started                                                      |
+| M3-05    | B3; not started                                                      |
+| M3-06    | B3; not started                                                      |
+| M3-07    | B3; not started                                                      |
+| M3-08    | B3; not started                                                      |
+| M4-01    | B4; not started                                                      |
+| M4-02    | B4; not started                                                      |
+| M4-03    | B4; not started                                                      |
+| M4-04    | B4; not started                                                      |
+| M4-05    | B4; not started                                                      |
+| M4-06    | B4; not started                                                      |
+| M4-07    | B4; not started                                                      |
+| M4-08    | B4; not started                                                      |
+| M4-09    | B4; not started                                                      |
+| M5-01    | B5                                                                   |
+| M5-02    | B5                                                                   |
+| M5-03    | B5                                                                   |
+| M5-04    | B5                                                                   |
+| M5-05    | B6                                                                   |
+| M5-06    | B6                                                                   |
+| M5-07    | B6                                                                   |
+| M5-08    | B6                                                                   |
+| M5-09    | B6                                                                   |
+| M5-10    | B6                                                                   |
+| M5-11    | B6                                                                   |
+| M5-12    | B6                                                                   |
+| M5-13    | B6                                                                   |
+| M6-01    | B5; not started                                                      |
+| M6-02    | B5; not started                                                      |
+| M6-03    | B5; not started                                                      |
+| M6-04    | B5; not started                                                      |
+| M6-05    | B5; not started                                                      |
+| M6-06    | B5; not started                                                      |
+| M6-07    | B5; not started                                                      |
+| M6-08    | B5; not started                                                      |
+| M7-01    | B7; not started                                                      |
+| M7-02    | B7; not started                                                      |
+| M7-03    | B7; not started                                                      |
+| M7-04    | B7; not started                                                      |
+| M7-05    | B7; not started                                                      |
+| M7-06    | B7; not started                                                      |
+| M7-07    | B7; not started                                                      |
+| M7-08    | B7; not started                                                      |
+| M8-01    | B8; not started                                                      |
+| M8-02    | B8; not started                                                      |
+| M8-03    | B8; not started                                                      |
+| M8-04    | B8; not started                                                      |
+| M8-05    | B8; not started                                                      |
+| M8-06    | B8; not started                                                      |
+| M8-07    | B8; not started                                                      |
+| M8-08    | B8; not started                                                      |
+| M8-09    | B8; not started                                                      |
+| M9-01    | B9; not started                                                      |
+| M9-02    | B9; not started                                                      |
+| M9-03    | B9; not started                                                      |
+| M9-04    | B9; not started                                                      |
+| M9-05    | B9; not started                                                      |
+| M9-06    | B9; not started                                                      |
+| M10-01   | B10                                                                  |
+| M10-02   | B10                                                                  |
+| M10-03   | B10                                                                  |
+| M10-04   | B10                                                                  |
+| M10-05   | B10                                                                  |
+| M10-06   | C1-C5                                                                |
+| M10-07   | C1-C5                                                                |
+| M10-08   | C1-C5                                                                |
+| M10-09   | C1-C5                                                                |
+| M10-10   | C1-C5                                                                |
+| M10-11   | C1-C5                                                                |
+| M10-12   | C1-C5                                                                |
+| D-01     | done (`9a1a91f`)                                                     |
+| D-02     | A7/A12/A13 frontend demo code (`840a29c`); acceptance pending        |
+| R-01     | done (`ef7022e`)                                                     |
+| R-02     | done (`dc54ad0`)                                                     |
+| S-01     | done (`4daefe7`)                                                     |
+| F-01     | done (`10d3926`)                                                     |
