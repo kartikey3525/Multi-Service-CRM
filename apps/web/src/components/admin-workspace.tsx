@@ -370,17 +370,22 @@ export function AdminWorkspace({ view }: { view: string }) {
         />
         <section className="admin-kpi-grid" aria-label="Network summary">
           {[
-            ['Active network', summary.partners, 'Partners across three tiers'],
-            ['Applications', summary.applications, 'Submitted for review'],
-            ['Orders', summary.orders, 'Across all service lines'],
-            ['Top-ups awaiting review', summary.pendingTopups, 'Finance queue'],
-            ['Open support tickets', summary.openTickets, 'Partner care queue'],
-          ].map(([title, value, detail]) => (
-            <article className="card admin-kpi" key={String(title)}>
+            ['/admin/partners', 'Active network', summary.partners, 'Partners across three tiers'],
+            ['/admin/applications', 'Applications', summary.applications, 'Submitted for review'],
+            ['/admin/orders', 'Orders', summary.orders, 'Across all service lines'],
+            [
+              '/admin/wallet/topups',
+              'Top-ups awaiting review',
+              summary.pendingTopups,
+              'Finance queue',
+            ],
+            ['/admin/tickets', 'Open support tickets', summary.openTickets, 'Partner care queue'],
+          ].map(([href, title, value, detail]) => (
+            <a className="card admin-kpi" href={String(href)} key={String(title)}>
               <span>{title}</span>
               <strong>{value ?? '—'}</strong>
               <small>{detail}</small>
-            </article>
+            </a>
           ))}
         </section>
         <section className="card admin-breakdown" aria-label="Order status chart">
@@ -405,6 +410,9 @@ export function AdminWorkspace({ view }: { view: string }) {
               </li>
             ))}
           </ul>
+          {orderBreakdown.length === 0 && !error ? (
+            <p className="empty-state">No orders in the demo queue yet.</p>
+          ) : null}
         </section>
         <section className="card admin-chart-card">
           <div className="section-heading">

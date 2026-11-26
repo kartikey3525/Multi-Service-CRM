@@ -319,6 +319,14 @@ export function PartnerWorkspace({ view }: { view: string }) {
             description="Your service desk at a glance. Pick up where you left off with customers and orders."
             breadcrumb={['Partner', 'Home']}
           />
+          {error ? (
+            <div className="error" role="alert">
+              <span>{error}</span>{' '}
+              <button className="text-button" onClick={() => void refresh()}>
+                Try again
+              </button>
+            </div>
+          ) : null}
           <section className="partner-summary-grid">
             <article className="card">
               <span>Available wallet</span>
@@ -350,6 +358,15 @@ export function PartnerWorkspace({ view }: { view: string }) {
                 All orders →
               </a>
             </div>
+            {rows.length === 0 && !error ? (
+              <div className="empty-state">
+                <strong>No recent orders yet</strong>
+                <p>Start with a service request when you are ready.</p>
+                <a className="button" href="/partner/services">
+                  Browse services
+                </a>
+              </div>
+            ) : null}
             <GenericTable
               rows={rows}
               columns={['orderNumber', 'customerName', 'status', 'totalPaise', 'updatedAt']}

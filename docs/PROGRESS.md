@@ -16,3 +16,5 @@ Task status and commit evidence are maintained in [ROADMAP.md](ROADMAP.md). Hist
 | Local server/site reachability     | Not checked in the 2026-11-26 run                                                                             | Unverified |
 
 Last check limitation: Docker could not access `/Users/admin/.docker/run/docker.sock` (`permission denied`).
+
+2026-11-26 A1 dashboard changes: `make check` passed lint, typecheck, unit tests (web 16/16, shared 17/17, API 17 passed/2 Mongo-only skipped), and builds; Docker denied access at API integration. Browser and responsive checks were not run.

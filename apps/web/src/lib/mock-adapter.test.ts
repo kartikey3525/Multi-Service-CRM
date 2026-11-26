@@ -84,6 +84,32 @@ test('mock seed contains 150 orders and rejects unauthenticated admin and partne
   assert.equal((await call('/admin/audit')).status, 403);
 });
 
+test('dashboard data endpoints return seeded summaries and role-scoped partner records', async () => {
+  localStorage.setItem('franchise-crm-demo-user', '64a100000000000000000002');
+  const [partnerOrders, wallet, partnerTickets] = await Promise.all([
+    call('/orders?pageSize=100'),
+    call('/partner/wallet'),
+    call('/partner/tickets'),
+  ]);
+  assert.equal(partnerOrders.status, 200);
+  assert.ok((partnerOrders.body as { items: unknown[] }).items.length > 0);
+  assert.equal(wallet.status, 200);
+  assert.ok((wallet.body as { wallet: { balancePaise: number } }).wallet.balancePaise >= 0);
+  assert.equal(partnerTickets.status, 200);
+
+  localStorage.setItem('franchise-crm-demo-user', '64a100000000000000000001');
+  const [partners, applications, orders, topups, tickets] = await Promise.all([
+    call('/admin/partners'),
+    call('/admin/applications'),
+    call('/admin/orders'),
+    call('/admin/wallet/topups'),
+    call('/admin/tickets'),
+  ]);
+  for (const response of [partners, applications, orders, topups, tickets])
+    assert.equal(response.status, 200);
+  assert.ok((orders.body as { items: unknown[] }).items.length > 0);
+});
+
 test('mock partner can create an order which debits integer paise and appends immutable history', async () => {
   localStorage.setItem('franchise-crm-demo-user', '64a100000000000000000002');
   const services = await call('/services');

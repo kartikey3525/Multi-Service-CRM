@@ -4,22 +4,22 @@ Priority is Phase A (frontend on demo data), then Phase B (backend one feature a
 
 ## Phase A — frontend on demo data
 
-| Task | Screen group and routes (each SPEC §4 route listed once)                                                                                   | State |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------------ | ----- |
-| A1   | Partner/admin dashboards: `/partner`, `/admin`                                                                                             | [ ]   |
-| A2   | New order and order detail: `/partner/orders/new`, `/partner/orders`, `/partner/orders/[id]`, `/admin/orders`                              | [ ]   |
-| A3   | Wallet: `/partner/wallet`, `/admin/wallet-requests`, `/admin/ledger`                                                                       | [ ]   |
-| A4   | Applications and partner admin: `/apply`, `/admin/applications`, `/admin/partners`                                                         | [ ]   |
-| A5   | Plans: `/plans`, `/admin/plans`                                                                                                            | [ ]   |
-| A6   | Services and form builder: `/services`, `/admin/services`, `/admin/forms`                                                                  | [ ]   |
-| A7   | Customers and leads: `/partner/customers`, `/partner/leads`                                                                                | [ ]   |
-| A8   | Commissions and payouts: `/partner/commissions`, `/admin/commissions`, `/admin/payouts`                                                    | [ ]   |
-| A9   | Tickets: `/partner/support`, `/admin/tickets`                                                                                              | [ ]   |
-| A10  | Reports: `/admin/reports`                                                                                                                  | [ ]   |
-| A11  | Settings and audit: `/admin/settings`, `/admin/audit`, `/admin/users`                                                                      | [ ]   |
-| A12  | Content and learning: `/partner/learn`, `/admin/content`                                                                                   | [ ]   |
-| A13  | Partner tools/team/profile: `/partner/tools/invoice`, `/partner/tools/lead-pages`, `/partner/network`, `/partner/team`, `/partner/profile` | [ ]   |
-| A14  | Public pages and auth: `/`, `/login`, `/admin/login`, `/income-calculator`, `/status/[token]`, `/terms`, `/privacy`, `/refunds`            | [ ]   |
+| Task | Screen group and routes (each SPEC §4 route listed once)                                                                                   | State                                                                              |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| A1   | Partner/admin dashboards: `/partner`, `/admin`                                                                                             | [x] Implemented and unit-checked; browser verification pending (`A1` commit below) |
+| A2   | New order and order detail: `/partner/orders/new`, `/partner/orders`, `/partner/orders/[id]`, `/admin/orders`                              | [ ]                                                                                |
+| A3   | Wallet: `/partner/wallet`, `/admin/wallet-requests`, `/admin/ledger`                                                                       | [ ]                                                                                |
+| A4   | Applications and partner admin: `/apply`, `/admin/applications`, `/admin/partners`                                                         | [ ]                                                                                |
+| A5   | Plans: `/plans`, `/admin/plans`                                                                                                            | [ ]                                                                                |
+| A6   | Services and form builder: `/services`, `/admin/services`, `/admin/forms`                                                                  | [ ]                                                                                |
+| A7   | Customers and leads: `/partner/customers`, `/partner/leads`                                                                                | [ ]                                                                                |
+| A8   | Commissions and payouts: `/partner/commissions`, `/admin/commissions`, `/admin/payouts`                                                    | [ ]                                                                                |
+| A9   | Tickets: `/partner/support`, `/admin/tickets`                                                                                              | [ ]                                                                                |
+| A10  | Reports: `/admin/reports`                                                                                                                  | [ ]                                                                                |
+| A11  | Settings and audit: `/admin/settings`, `/admin/audit`, `/admin/users`                                                                      | [ ]                                                                                |
+| A12  | Content and learning: `/partner/learn`, `/admin/content`                                                                                   | [ ]                                                                                |
+| A13  | Partner tools/team/profile: `/partner/tools/invoice`, `/partner/tools/lead-pages`, `/partner/network`, `/partner/team`, `/partner/profile` | [ ]                                                                                |
+| A14  | Public pages and auth: `/`, `/login`, `/admin/login`, `/income-calculator`, `/status/[token]`, `/terms`, `/privacy`, `/refunds`            | [ ]                                                                                |
 
 The frontend demo foundation/public/auth/admin/partner work is present in commits `2574baa`, `ddfd618`, `b3f5573`, `99402f7`, and `840a29c`; this establishes code presence, not current acceptance. The route audit is in `docs/FRONTEND_PLAN.md` and identified missing routes/aliases. Reconcile A-task completion only with route-specific checks; no frontend task is ticked from aggregate evidence alone.
 
@@ -50,14 +50,15 @@ The frontend demo foundation/public/auth/admin/partner work is present in commit
 
 ## Progress checklist
 
-| New task | Status / evidence                                                                        |
-| -------- | ---------------------------------------------------------------------------------------- |
-| A1–A14   | [ ] Frontend task acceptance not reverified per route; earlier code commits listed above |
-| B1       | [x] code; owner accepted Gate A; commit `15a6987`; staging deferred                      |
-| B2       | [x] implemented subset; commits `a6c7a35`, `f1aff40`; deferred items above               |
-| B3       | [ ] M3-01 only, `fa8ef0b`; DB integration skipped                                        |
-| B4–B10   | [ ] Not started                                                                          |
-| C1–C5    | [ ] Not started                                                                          |
+| New task | Status / evidence                                                                                             |
+| -------- | ------------------------------------------------------------------------------------------------------------- |
+| A1       | [x] dashboard data tests, retry/empty states, actionable admin summary cards; browser unverified; commit `A1` |
+| A2–A14   | [ ] Frontend task acceptance not reverified per route; earlier code commits listed above                      |
+| B1       | [x] code; owner accepted Gate A; commit `15a6987`; staging deferred                                           |
+| B2       | [x] implemented subset; commits `a6c7a35`, `f1aff40`; deferred items above                                    |
+| B3       | [ ] M3-01 only, `fa8ef0b`; DB integration skipped                                                             |
+| B4–B10   | [ ] Not started                                                                                               |
+| C1–C5    | [ ] Not started                                                                                               |
 
 ## Archive: old IDs to new numbering
 

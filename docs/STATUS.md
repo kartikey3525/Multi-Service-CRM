@@ -5,6 +5,7 @@ The project is a working foundation plus a substantial frontend demonstration. I
 ## What exists
 
 - The Next.js demo includes public application and sign-in flows, admin operations screens, and partner dashboard, orders, wallet, customers, leads, commissions, tickets, learning, profile and tools screens. Demo data is seeded and mutations use the local mock adapter. Several SPEC routes are absent or use aliases; see `ROADMAP.md`.
+- A1 dashboard work adds direct admin summary links, partner dashboard retry and empty-order guidance, with mock API seed coverage. Browser verification is still pending.
 - The NestJS API has real identity/session/permissions/audit behavior, partner application and KYC workflows, partner management and scoped hierarchy reads, plus billing models and invoice-numbering code. The M3-01 Mongo concurrency and isolation acceptance tests have not run in this environment. Wallet/ledger, catalogue/orders, customers/leads, commission, support/reporting/content and partner tools are not yet real backend features; screens in those areas remain demo-driven.
 - MongoDB/Mongoose is the system of record. Redis supports sessions and queues. Local object storage is RustFS. The API uses controller/service/repository layers; the repository scope guard protects partner-owned model queries.
 
