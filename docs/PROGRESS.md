@@ -1,5 +1,11 @@
 # Progress
 
+## S-01 — Branch sync (2026-11-26)
+
+Verified `frontend-demo` is the integration branch. `main` tip `1a4a977` is its merge-base and `frontend-demo` is 12 commits ahead / 0 behind; `m2-partner-onboarding` tip `f1aff40` is its merge-base and `frontend-demo` is 10 commits ahead / 0 behind. `git merge --no-ff main` and `git merge --no-ff m2-partner-onboarding` both reported `Already up to date`; there were no incoming commits, changed-file conflict candidates, or conflicts to resolve. Repository scoping and the scope guard remain in the already-contained R-02 commits. No history rewrite, push, or main merge was performed.
+
+**S-01 checks, 2026-11-26:** `make check` passed lint, typecheck, unit tests (web 15/15, shared 17/17, API 17 passed/2 Mongo-only skipped), and build (Next.js generated 50 routes; NestJS build passed). It stopped at `make api-test` because the Docker socket `/Users/admin/.docker/run/docker.sock` returned `permission denied`; `make mongo-probe` was not reached. The skipped named tests are `API readiness and repository partner scoping against a throwaway MongoDB database` and `parallel invoice issuing allocates gapless unique numbers in the invoice transaction`. No Mongo integration, authorization probe, server, or browser tests ran in this S-01 check. To run the Docker-backed checks locally: `make up-dev`, then `make api-test`, then `make mongo-probe` (or `make check` to run lint/typecheck/unit/build first as well). No Docker services were started here.
+
 ## R-01 — Progress reconciliation (2026-11-25)
 
 The table records literal task checkboxes in this file. M0 tasks have explicit ticks; M1/M2 are described narratively and have no per-task ticks. The M1 Gate A owner acceptance is recorded; no other gate approval is inferred.
